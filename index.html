@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURACIÓN — solo el administrador edita esta línea
    Sustituye TU_URL_AQUI por la URL real del Apps Script
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5X1USGy_zMBnLtf1ImJa1_7RWJGPm1GVWju8_-re267exYrqYubPfWbebZCwR3jKZ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/TU_URL_AQUI/exec";
 
 /* ── DATOS DE DEMO (usados solo si el Sheet no responde) ── */
 const COND_DEF  = [
@@ -320,7 +320,14 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
   /* Cambio de ruta → resetear referencia */
   const onRuta    = v => setForm(f => ({...f, ruta:v, refRaw:""}));
   /* Cambio de destino CORTO → limpiar origen/destino libres */
-  const onDestCorto = v => setForm(f => ({...f, destCorto:v, origen:"", destino:""}));
+  const onDestCorto = v => setForm(f => ({
+    ...f,
+    destCorto: v,
+    origen:    "",
+    destino:   "",
+    // limpiar refRaw si el nuevo destino no necesita referencia
+    refRaw: (v === "BIDONES" || v === "OTROS") ? "" : f.refRaw
+  }));
 
   /* Objeto del destino CORTO actualmente seleccionado */
   const destCortoObj = DESTINOS_CORTO.find(d => d.id === form.destCorto) || null;
@@ -381,7 +388,9 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
           e.ref = "Máximo 30 caracteres";
       }
     }
-    if (form.tipo === "Corto" && form.destCorto) {
+    // Corto: referencia obligatoria solo si el destino NO es Bidones ni Otros
+    if (form.tipo === "Corto" && form.destCorto &&
+        form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") {
       if (!form.refRaw || form.refRaw.length !== 7)
         e.ref = "Exactamente 7 dígitos (prefijo OCZ automático)";
       else if (!/^\d{7}$/.test(form.refRaw))
@@ -607,7 +616,10 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       ),
 
       /* ── REFERENCIA ── */
-      (form.tipo === "Acarreo" && form.ruta || form.tipo === "Corto" && form.destCorto) && React.createElement("div", {className:"sec"},
+      (form.tipo === "Acarreo" && form.ruta ||
+       form.tipo === "Corto" && form.destCorto &&
+         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") &&
+      React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Referencia"),
         React.createElement("div", {className:"fld"},
           /* White&Green Acarreo: campo libre alfanumérico sin prefijo */
