@@ -88,6 +88,7 @@
     /* ── CMR ── */
     .cmr{border:2px dashed var(--border);border-radius:12px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s}
     .cmr:hover,.cmr.on{border-color:var(--amber);background:rgba(240,165,0,.04)}
+    .cmr.er{border-color:var(--err)}
     .cmr-ic{font-size:32px;margin-bottom:8px}
     .cmr-tx{color:var(--muted);font-size:13px;line-height:1.5}
     .cmr-nm{color:var(--amber2);font-weight:600;margin-top:7px;font-size:13px;word-break:break-all}
@@ -146,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURACIÓN — solo el administrador edita esta línea
    Sustituye TU_URL_AQUI por la URL real del Apps Script
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5NKsldKxPq6sFczrq12fiNH-LhmhbVGjRRVXYxT1fXqOJ40llhv6AGy87uvAVauSh/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyegL5YQMkD0lQKuWED2we_44Jv8ytybGGncHKj-CyYhHwHM8WXyIrjdb3l94HCCuQp/exec";
 
 /* ── DATOS DE DEMO (usados solo si el Sheet no responde) ── */
 const COND_DEF  = [
@@ -361,6 +362,9 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     } else if (form.fechaCarga && form.fechaDescarga < form.fechaCarga) {
       e.fechaDescarga = "No puede ser anterior a la fecha de carga";
     }
+
+    /* CMR obligatorio */
+    if (!form.cmrFile) e.cmr = "Adjunta el CMR (foto o documento)";
 
     /* Referencia */
     if (form.tipo === "Acarreo" && form.ruta) {
@@ -636,12 +640,10 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         )
       ),
 
-      /* ── CMR (opcional) ── */
+      /* ── CMR (obligatorio) ── */
       React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "CMR",
-          React.createElement("span",{style:{fontSize:10,fontWeight:400,color:"var(--muted)",letterSpacing:0,textTransform:"none",marginLeft:6}},"(opcional)")
-        ),
-        React.createElement("div", {className:`cmr${form.cmrFile?" on":""}`, onClick:()=>fileRef.current.click()},
+        React.createElement("div", {className:"sec-ttl"}, "CMR"),
+        React.createElement("div", {className:`cmr${form.cmrFile?" on":""}${errs.cmr?" er":""}`, onClick:()=>fileRef.current.click()},
           React.createElement("div",{className:"cmr-ic"}, form.cmrFile ? "📄" : "📷"),
           React.createElement("div",{className:"cmr-tx"},
             form.cmrFile ? "Archivo adjunto:" : "Toca para seleccionar imagen, PDF o hacer foto"
@@ -651,9 +653,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         React.createElement("input",{ref:fileRef, type:"file", style:{display:"none"},
           accept:"image/*,application/pdf", capture:"environment",
           onChange:e=>{if(e.target.files[0]) s("cmrFile",e.target.files[0]);}}),
-        !form.cmrFile && React.createElement("div",{
-          style:{color:"var(--muted)",fontSize:11,marginTop:7,textAlign:"center"}
-        },"Recomendado — el porte se registrará igualmente sin CMR"),
+        errs.cmr && React.createElement("div",{className:"emsg",style:{marginTop:8,justifyContent:"center"}},"⚠ "+errs.cmr),
         form.cmrFile && React.createElement("button",{className:"clr-btn",
           onClick:e=>{e.stopPropagation();s("cmrFile",null);if(fileRef.current)fileRef.current.value="";}},
           "✕ Quitar archivo")
