@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURACIÓN — solo el administrador edita esta línea
    Sustituye TU_URL_AQUI por la URL real del Apps Script
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzFlw8Xug3d6qKuFe295J8kdE7dKlNqcQIY_AZLOl77dnjsBhVsXqkr88NjkiPHV0Q/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXJC_6vG0KlOlsoBV0ZU-HSfpeROUCNQ83JNENkWsb4I-ziOyw8bG3_3A9ungaFrw/exec";
 
 /* ── DATOS DE DEMO (usados solo si el Sheet no responde) ── */
 const COND_DEF  = [
@@ -429,7 +429,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         remolque:      form.remolque,
         tipo:          form.tipo,
         destino:       destinoFinal,
-        cliente:       form.tipo === "Acarreo" ? form.cliente : "-",
+        cliente:       form.tipo === "Acarreo" ? form.cliente : "AMC",
         ruta:          form.tipo === "Acarreo" ? form.ruta    : "-",
         fechaCarga:    form.fechaCarga.replace("T"," "),
         fechaDescarga: form.fechaDescarga.replace("T"," "),
