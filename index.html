@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURACIÓN — solo el administrador edita esta línea
    Sustituye TU_URL_AQUI por la URL real del Apps Script
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyegL5YQMkD0lQKuWED2we_44Jv8ytybGGncHKj-CyYhHwHM8WXyIrjdb3l94HCCuQp/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuW9q4wDJslfXbffFKFjwAMeJv8umecs3U00-a415KJxUZlRFQFI8r7l_i9cTeey2g/exec";
 
 /* ── DATOS DE DEMO (usados solo si el Sheet no responde) ── */
 const COND_DEF  = [
@@ -305,7 +305,8 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
   const [errs,     setErrs]     = useState({});
   const [refFocus, setRefFocus] = useState(false);
   const [busy,     setBusy]     = useState(false);
-  const fileRef = useRef(null);
+  const fileRef    = useRef(null);
+  const submitting = useRef(false); // guardia síncrona anti-doble-envío
   const s = (k,v) => setForm(f => ({...f, [k]:v}));
 
   const onCodigo  = v => {
@@ -392,9 +393,11 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
   /* ── Envío ── */
   const handleSubmit = async () => {
+    if (submitting.current) return;   // bloqueo síncrono inmediato
     const e = validate();
     setErrs(e);
     if (Object.keys(e).length > 0) return;
+    submitting.current = true;
     setBusy(true);
     try {
       let cmrBase64="", cmrType="", cmrName="";
@@ -432,8 +435,10 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       }
 
       onOk({payload, demo: isDemo()});
+      // no reseteamos submitting — la pantalla cambia a "success"
     } catch(err) {
       setErrs(ex => ({...ex, submit:"Error inesperado: " + err.message}));
+      submitting.current = false;
       setBusy(false);
     }
   };
