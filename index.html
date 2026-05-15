@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURACIÓN — solo el administrador edita esta línea
    Sustituye TU_URL_AQUI por la URL real del Apps Script
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfY6q_GghdCtBk24TgIF606z34-4J_U1DztlFa8pJvhTStwm9cPLKoNf1Pp5hkm-Tk/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/TU_URL_AQUI/exec";
 
 /* ── DATOS DE DEMO (usados solo si el Sheet no responde) ── */
 const COND_DEF  = [
@@ -334,7 +334,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
   const rutasDisponibles = RUTAS[form.cliente] || [];
   const prefijo          = getPrefijo(form.tipo, form.cliente);
-  const getReferencia    = () => prefijo ? prefijo + form.refRaw : form.refRaw;
+  const getReferencia    = () => form.refRaw ? (prefijo ? prefijo + form.refRaw : form.refRaw) : "";
 
   /* ── Validación ── */
   const validate = () => {
