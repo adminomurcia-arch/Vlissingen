@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="theme-color" content="#0d1117"/>
-  <title>Haulage Vlissingen</title>
+  <title>Portes Vlissingen</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -125,7 +125,7 @@
     s.onerror = function() {
       document.getElementById('root').innerHTML =
         '<div style="color:#f85149;font-family:sans-serif;padding:32px;text-align:center">' +
-        '⚠ Could not load React.<br>Check your internet connection.</div>';
+        '⚠ No se pudo cargar React.<br>Comprueba tu conexión a internet.</div>';
     };
     document.head.appendChild(s);
   }
@@ -181,8 +181,8 @@ const DESTINOS_CORTO = [
   {id:"AH_DE",  label:"AH Delfgauw",           origen:false, destino:false},
   {id:"AH_TZ",  label:"AH Tilburg + Zwolle",   origen:false, destino:false},
   {id:"AH_TL",  label:"AH Tilburg + Limburg",  origen:false, destino:false},
-  {id:"BIDONES",label:"Barrels",               origen:true,  destino:false},
-  {id:"OTROS",  label:"Others",                 origen:true,  destino:true},
+  {id:"BIDONES",label:"Bidones",               origen:true,  destino:false},
+  {id:"OTROS",  label:"Otros",                 origen:true,  destino:true},
 ];
 
 /* Reference prefix */
@@ -260,7 +260,7 @@ function ConductorBlock({codigo, nombre, onChange}) {
   const state = codigo==='' ? 'idle' : nombre ? 'valid' : 'error';
   return React.createElement("div", {className:`cond-block${state==='valid'?' valid':state==='error'?' error':''}`},
     React.createElement("div", {className:"cond-top"},
-      React.createElement("div", {className:"cond-lbl-col"}, "Code"),
+      React.createElement("div", {className:"cond-lbl-col"}, "Código"),
       React.createElement("input", {
         className:"cond-input", value:codigo, maxLength:10,
         placeholder:"C001", autoCapitalize:"characters", spellCheck:false,
@@ -280,8 +280,8 @@ function ConductorBlock({codigo, nombre, onChange}) {
           )
         : React.createElement("div", {className:"cond-name empty"},
             codigo.length===0
-              ? "Enter your driver code"
-              : `Code "${codigo}" not found`
+              ? "Introduce tu código de conductor"
+              : `Código "${codigo}" no encontrado`
           )
     )
   );
@@ -341,19 +341,19 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     const e = {};
     const now = fmtNow();
 
-    if (!form.nombre)   e.codigo   = "Invalid driver code";
-    if (!form.tractora) e.tractora = "Required";
+    if (!form.nombre)   e.codigo   = "Código de conductor no válido";
+    if (!form.tractora) e.tractora = "Obligatorio";
     if (!form.remolque) e.remolque = "Required";
-    if (!form.tipo)     e.tipo     = "Select the haulage type";
+    if (!form.tipo)     e.tipo     = "Selecciona el tipo de porte";
 
     if (form.tipo === "Acarreo") {
-      if (!form.cliente) e.cliente = "Select the client";
-      if (!form.ruta)    e.ruta    = "Select the route";
+      if (!form.cliente) e.cliente = "Selecciona el cliente";
+      if (!form.ruta)    e.ruta    = "Selecciona la ruta";
     }
 
     if (form.tipo === "Corto") {
-      if (!form.destCorto) e.destCorto = "Select the destination";
-      if (destCortoObj?.origen  && !form.origen)  e.origen  = "Required field";
+      if (!form.destCorto) e.destCorto = "Selecciona el destino";
+      if (destCortoObj?.origen  && !form.origen)  e.origen  = "Campo obligatorio";
       if (destCortoObj?.destino && !form.destino) e.destino = "Required field";
     }
 
@@ -361,40 +361,40 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     if (!form.fechaCarga) {
       e.fechaCarga = "Required";
     } else if (form.fechaCarga > now) {
-      e.fechaCarga = "Cannot be later than the current date/time";
+      e.fechaCarga = "No puede ser posterior a la fecha/hora actual";
     }
 
     /* Fecha de descarga: no puede ser anterior a la de carga */
     if (!form.fechaDescarga) {
       e.fechaDescarga = "Required";
     } else if (form.fechaCarga && form.fechaDescarga < form.fechaCarga) {
-      e.fechaDescarga = "Cannot be earlier than the loading date";
+      e.fechaDescarga = "No puede ser anterior a la fecha de carga";
     }
 
     /* CMR required */
-    if (!form.cmrFile) e.cmr = "Attach the CMR (photo or document)";
+    if (!form.cmrFile) e.cmr = "Adjunta el CMR (foto o documento)";
 
     /* Reference */
     if (form.tipo === "Acarreo" && form.ruta) {
       if (form.cliente === "AMC") {
         if (!form.refRaw || form.refRaw.length !== 7)
-          e.ref_PLACEHOLDER
+          e.ref = "Exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
         else if (!/^\d{7}$/.test(form.refRaw))
-          e.ref = "Digits only";
+          e.ref = "Solo dígitos";
       } else if (form.cliente === "White&Green") {
         if (!form.refRaw || form.refRaw.length < 10)
-          e.ref = "Minimum 10 characters";
+          e.ref = "Mínimo 10 caracteres";
         else if (form.refRaw.length > 50)
-          e.ref = "Maximum 50 characters";
+          e.ref = "Máximo 50 caracteres";
       }
     }
     // Short: reference required only if destination is NOT Barrels or Others
     if (form.tipo === "Corto" && form.destCorto &&
         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") {
       if (!form.refRaw || form.refRaw.length !== 7)
-        e.ref_PLACEHOLDER
+        e.ref = "Exactamente 7 dígitos (prefijo OCZ añadido automáticamente)";
       else if (!/^\d{7}$/.test(form.refRaw))
-        e.ref = "Digits only";
+        e.ref = "Solo dígitos";
     }
 
     return e;
@@ -446,7 +446,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       onOk({payload, demo: isDemo()});
       // no reseteamos submitting — la pantalla cambia a "success"
     } catch(err) {
-      setErrs(ex => ({...ex, submit:"Unexpected error: " + err.message}));
+      setErrs(ex => ({...ex, submit:"Error inesperado: " + err.message}));
       submitting.current = false;
       setBusy(false);
     }
@@ -458,13 +458,13 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
     /* ── HEADER ── */
     React.createElement("div", {className:"hdr"},
-      React.createElement("div", {className:"logo"}, "HAULAGE ", React.createElement("b",null,"VLISSINGEN")),
+      React.createElement("div", {className:"logo"}, "PORTES ", React.createElement("b",null,"VLISSINGEN")),
       React.createElement("div", {className:"hdr-right"},
         !isDemo() && React.createElement("div", {
           className:`sync-dot ${dotCls}`,
-          title: listsStatus==="ok"      ? "Lists updated from Google Sheets"
-               : listsStatus==="loading" ? "Updating lists..."
-               : listsStatus==="error"   ? "Offline — using local data"
+          title: listsStatus==="ok"      ? "Listas actualizadas desde Google Sheets"
+               : listsStatus==="loading" ? "Actualizando listas..."
+               : listsStatus==="error"   ? "Sin conexión — usando datos locales"
                : ""
         })
       )
@@ -474,33 +474,33 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     isDemo() && React.createElement("div", {
       className:"banner warn",
       style:{margin:"12px 18px 0"}
-    }, "⚠ Demo mode — configure SCRIPT_URL in the code"),
+    }, "⚠ Modo demo — configura SCRIPT_URL en el código"),
 
     React.createElement("div", {className:"body"},
 
       /* ── CONDUCTOR ── */
       React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Driver"),
+        React.createElement("div", {className:"sec-ttl"}, "Conductor"),
         React.createElement(ConductorBlock, {codigo:form.codigo, nombre:form.nombre, onChange:onCodigo}),
         errs.codigo && React.createElement("div",{className:"emsg",style:{marginTop:8}},"⚠ "+errs.codigo)
       ),
 
       /* ── VEHÍCULO ── */
       React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Vehicle",
-          fromSheet && React.createElement("span",{className:"tag"},"Sheet ✓")
+        React.createElement("div", {className:"sec-ttl"}, "Vehículo",
+          fromSheet && React.createElement("span",{className:"tag"},"Hoja ✓")
         ),
         React.createElement("div", {className:"row2"},
           React.createElement("div", {className:"fld"},
-            React.createElement("label",null,"Tractor"),
+            React.createElement("label",null,"Tractora"),
             React.createElement("select", {value:form.tractora, onChange:e=>s("tractora",e.target.value), className:errs.tractora?"er":""},
-              React.createElement("option",{value:""},"-- Select --"),
+              React.createElement("option",{value:""},"-- Selecciona --"),
               tractoras.map(t => React.createElement("option",{key:t,value:t},t))
             ),
             errs.tractora && React.createElement("div",{className:"emsg"},"⚠ "+errs.tractora)
           ),
           React.createElement("div", {className:"fld"},
-            React.createElement("label",null,"Trailer"),
+            React.createElement("label",null,"Remolque"),
             React.createElement("select", {value:form.remolque, onChange:e=>s("remolque",e.target.value), className:errs.remolque?"er":""},
               React.createElement("option",{value:""},"-- Select --"),
               remolques.map(r => React.createElement("option",{key:r,value:r},r))
@@ -512,10 +512,10 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
       /* ── TIPO ── */
       React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Haulage Type"),
+        React.createElement("div", {className:"sec-ttl"}, "Tipo de Porte"),
         React.createElement("div", {className:"pick-grid"},
-          React.createElement(Pick, {label:"Haulage", sub:"Full load", active:form.tipo==="Acarreo", onClick:()=>onTipo("Acarreo")}),
-          React.createElement(Pick, {label:"Short",   sub:"Point delivery", active:form.tipo==="Corto",   onClick:()=>onTipo("Corto")})
+          React.createElement(Pick, {label:"Acarreo", sub:"Carga completa", active:form.tipo==="Acarreo", onClick:()=>onTipo("Acarreo")}),
+          React.createElement(Pick, {label:"Corto",   sub:"Entrega puntual", active:form.tipo==="Corto",   onClick:()=>onTipo("Corto")})
         ),
         errs.tipo && React.createElement("div",{className:"emsg",style:{marginTop:4}},"⚠ "+errs.tipo)
       ),
@@ -523,7 +523,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       /* ── HAULAGE: Client + Route ── */
       form.tipo === "Acarreo" && React.createElement(React.Fragment, null,
         React.createElement("div", {className:"sec"},
-          React.createElement("div", {className:"sec-ttl"}, "Client"),
+          React.createElement("div", {className:"sec-ttl"}, "Cliente"),
           React.createElement("div", {className:"pick-grid"},
             React.createElement(Pick, {label:"AMC",           active:form.cliente==="AMC",         onClick:()=>onCliente("AMC")}),
             React.createElement(Pick, {label:"White & Green", active:form.cliente==="White&Green",  onClick:()=>onCliente("White&Green")})
@@ -531,7 +531,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
           errs.cliente && React.createElement("div",{className:"emsg",style:{marginTop:5}},"⚠ "+errs.cliente)
         ),
         form.cliente && React.createElement("div", {className:"sec"},
-          React.createElement("div", {className:"sec-ttl"}, "Route"),
+          React.createElement("div", {className:"sec-ttl"}, "Ruta"),
           React.createElement("div", {className:"pick-col"},
             rutasDisponibles.map(r =>
               React.createElement(Pick, {key:r, label:r, active:form.ruta===r, onClick:()=>onRuta(r)})
@@ -543,7 +543,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
       /* ── SHORT: Destination + conditional fields ── */
       form.tipo === "Corto" && React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Destination"),
+        React.createElement("div", {className:"sec-ttl"}, "Destino"),
         React.createElement("div", {className:"pick-col"},
           DESTINOS_CORTO.map(d =>
             React.createElement(Pick, {key:d.id, label:d.label, active:form.destCorto===d.id, onClick:()=>onDestCorto(d.id)})
@@ -553,10 +553,10 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
         /* Campo ORIGEN — aparece para Bidones y Otros */
         destCortoObj?.origen && React.createElement("div",{className:"fld",style:{marginTop:14}},
-          React.createElement("label",null,"Origin"),
+          React.createElement("label",null,"Origen"),
           React.createElement("input",{
             value:form.origen,
-            placeholder:"Enter origin",
+            placeholder:"Introduce el origen",
             className:errs.origen?"er":"",
             onChange:e=>s("origen",e.target.value)
           }),
@@ -565,10 +565,10 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
         /* Campo DESTINO — aparece solo para Otros */
         destCortoObj?.destino && React.createElement("div",{className:"fld"},
-          React.createElement("label",null,"Destination"),
+          React.createElement("label",null,"Destino"),
           React.createElement("input",{
             value:form.destino,
-            placeholder:"Enter destination",
+            placeholder:"Introduce el destino",
             className:errs.destino?"er":"",
             onChange:e=>s("destino",e.target.value)
           }),
@@ -578,11 +578,11 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
       /* ── TIEMPOS ── */
       React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Times"),
+        React.createElement("div", {className:"sec-ttl"}, "Tiempos"),
         React.createElement("div", {className:"row2"},
           /* F/H Carga — no puede ser futura */
           React.createElement("div", {className:"fld"},
-            React.createElement("label",null,"Loading Date/Time"),
+            React.createElement("label",null,"Fecha/Hora Carga"),
             React.createElement("input",{
               type:"datetime-local",
               value:form.fechaCarga,
@@ -601,7 +601,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
           ),
           /* F/H Descarga — no puede ser anterior a la carga */
           React.createElement("div", {className:"fld"},
-            React.createElement("label",null,"Unloading Date/Time"),
+            React.createElement("label",null,"Fecha/Hora Descarga"),
             React.createElement("input",{
               type:"datetime-local",
               value:form.fechaDescarga,
@@ -620,14 +620,14 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
        form.tipo === "Corto" && form.destCorto &&
          form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") &&
       React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Reference"),
+        React.createElement("div", {className:"sec-ttl"}, "Referencia"),
         React.createElement("div", {className:"fld"},
           /* White&Green Acarreo: campo libre alfanumérico sin prefijo */
           form.tipo === "Acarreo" && form.cliente === "White&Green"
             ? React.createElement(React.Fragment, null,
                 React.createElement("input",{
                   value: form.refRaw,
-                  placeholder: "Min. 10 · Max. 50 characters",
+                  placeholder: "Mín. 10 · Máx. 50 caracteres",
                   maxLength: 50,
                   className: errs.ref?"er":"",
                   onChange: e => s("refRaw", e.target.value.slice(0,50)),
@@ -636,7 +636,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
                 }),
                 React.createElement("div",{className:"char-c"}, form.refRaw.length+"/50")
               )
-            /* AMC Haulage and any Short: fixed prefix + 7 digits */
+            /* AMC Acarreo y cualquier Corto: prefijo fijo + 7 dígitos */
             : React.createElement("div", {className:`ref-wrap${refFocus?" foc":""}${errs.ref?" er":""}`},
                 React.createElement("div", {className:"ref-pfx"}, prefijo),
                 React.createElement("input",{
@@ -652,7 +652,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
           errs.ref
             ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref)
             : prefijo && form.refRaw.length === 7
-              ? React.createElement("div",{className:"ref-hint"}, "Reference: "+prefijo+form.refRaw)
+              ? React.createElement("div",{className:"ref-hint"}, "Referencia: "+prefijo+form.refRaw)
               : null
         )
       ),
@@ -663,7 +663,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         React.createElement("div", {className:`cmr${form.cmrFile?" on":""}${errs.cmr?" er":""}`, onClick:()=>fileRef.current.click()},
           React.createElement("div",{className:"cmr-ic"}, form.cmrFile ? "📄" : "📷"),
           React.createElement("div",{className:"cmr-tx"},
-            form.cmrFile ? "File attached:" : "Tap to select image, PDF or take a photo"
+            form.cmrFile ? "Archivo adjunto:" : "Toca para seleccionar imagen, PDF o hacer una foto"
           ),
           form.cmrFile && React.createElement("div",{className:"cmr-nm"},"✓ "+form.cmrFile.name)
         ),
@@ -673,12 +673,12 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         errs.cmr && React.createElement("div",{className:"emsg",style:{marginTop:8,justifyContent:"center"}},"⚠ "+errs.cmr),
         form.cmrFile && React.createElement("button",{className:"clr-btn",
           onClick:e=>{e.stopPropagation();s("cmrFile",null);if(fileRef.current)fileRef.current.value="";}},
-          "✕ Remove file")
+          "✕ Quitar archivo")
       ),
 
       errs.submit && React.createElement("div",{className:"emsg",style:{marginBottom:14,textAlign:"center"}},"⚠ "+errs.submit),
       React.createElement("button",{className:"sub-btn", onClick:handleSubmit, disabled:busy},
-        busy ? "⏳ Sending..." : "✓ Register Haulage")
+        busy ? "⏳ Enviando..." : "✓ Registrar Porte")
     )
   );
 }
@@ -689,28 +689,28 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 function SuccessScreen({result, onNew}) {
   const p = result?.payload || {};
   const rows = [
-    ["Driver",  p.nombre],
-    ["Tractor",   p.tractora],
-    ["Trailer",   p.remolque],
-    ["Type",       p.tipo],
-    ["Destination",    p.destino && p.destino !== "-" ? p.destino : null],
-    ["Client",    p.cliente && p.cliente !== "-" ? p.cliente : null],
-    ["Route",       p.ruta    && p.ruta    !== "-" ? p.ruta    : null],
-    ["Reference", p.referencia && p.referencia !== "-" ? p.referencia : null],
+    ["Conductor",  p.nombre],
+    ["Tractora",   p.tractora],
+    ["Remolque",   p.remolque],
+    ["Tipo",       p.tipo],
+    ["Destino",    p.destino && p.destino !== "-" ? p.destino : null],
+    ["Cliente",    p.cliente && p.cliente !== "-" ? p.cliente : null],
+    ["Ruta",       p.ruta    && p.ruta    !== "-" ? p.ruta    : null],
+    ["Referencia", p.referencia && p.referencia !== "-" ? p.referencia : null],
     ["CMR",        p.cmrName || "—"],
   ].filter(([,v]) => v);
 
   return React.createElement("div", {className:"app"},
     React.createElement("div", {className:"hdr"},
-      React.createElement("div",{className:"logo"},"✓ ",React.createElement("b",null,"REGISTERED"))
+      React.createElement("div",{className:"logo"},"✓ ",React.createElement("b",null,"REGISTRADO"))
     ),
     React.createElement("div", {className:"suc-body"},
       React.createElement("div",{className:"suc-ic"},"✅"),
-      React.createElement("div",{className:"suc-ttl"},"HAULAGE REGISTERED!"),
+      React.createElement("div",{className:"suc-ttl"},"¡PORTE REGISTRADO!"),
       React.createElement("div",{className:"suc-sub"},
         result?.demo
-          ? "Demo mode — configure SCRIPT_URL in the code to save real data."
-          : "Haulage sent successfully to Google Sheets."
+          ? "Modo demo — configura SCRIPT_URL en el código para guardar datos reales."
+          : "Porte enviado correctamente a Google Sheets."
       ),
       React.createElement("div",{className:"suc-data"},
         rows.map(([k,v]) => React.createElement("div",{className:"suc-row",key:k},
@@ -718,7 +718,7 @@ function SuccessScreen({result, onNew}) {
           React.createElement("span",{className:"suc-v"},v)
         ))
       ),
-      React.createElement("button",{className:"new-btn", onClick:onNew},"+ New Haulage")
+      React.createElement("button",{className:"new-btn", onClick:onNew},"+ Nuevo Porte")
     )
   );
 }
