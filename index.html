@@ -172,6 +172,7 @@ const RUTAS = {
   "White&Green": [
     "WHITE&GREEN → SUPERMARITIME",
     "SUPERMARITIME → WHITE&GREEN",
+    "WHITE&GREEN → AMC",
   ],
 };
 
@@ -303,7 +304,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     destCorto:"",                     // id del destino CORTO seleccionado
     origen:"", destino:"",            // campos libres para Bidones/Otros
     fechaCarga: fmtNow(), fechaDescarga:"",
-    refRaw:"", cmrFile:null
+    refRaw:"", refRaw2:"", cmrFile:null
   });
   const [errs,     setErrs]     = useState({});
   const [refFocus, setRefFocus] = useState(false);
@@ -317,11 +318,11 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     setForm(f => ({...f, codigo:v.toUpperCase(), nombre: found ? found.nombre : ""}));
   };
   /* Type change → reset everything that depends on it */
-  const onTipo    = v => setForm(f => ({...f, tipo:v, cliente:"", ruta:"", destCorto:"", origen:"", destino:"", refRaw:""}));
+  const onTipo    = v => setForm(f => ({...f, tipo:v, cliente:"", ruta:"", destCorto:"", origen:"", destino:"", refRaw:"", refRaw2:""}));
   /* Client change → reset route and reference */
-  const onCliente = v => setForm(f => ({...f, cliente:v, ruta:"", refRaw:""}));
+  const onCliente = v => setForm(f => ({...f, cliente:v, ruta:"", refRaw:"", refRaw2:""}));
   /* Route change → reset reference */
-  const onRuta    = v => setForm(f => ({...f, ruta:v, refRaw:""}));
+  const onRuta    = v => setForm(f => ({...f, ruta:v, refRaw:"", refRaw2:""}));
   /* Cambio de destino CORTO → limpiar origen/destino libres */
   const onDestCorto = v => setForm(f => ({
     ...f,
@@ -337,7 +338,15 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
   const rutasDisponibles = RUTAS[form.cliente] || [];
   const prefijo          = getPrefijo(form.tipo, form.cliente);
-  const getReference    = () => form.refRaw ? (prefijo ? prefijo + form.refRaw : form.refRaw) : "";
+  const isRutaDobleRef  = form.tipo === "Acarreo" && form.cliente === "White&Green" && form.ruta === "WHITE&GREEN → AMC";
+  const getReference    = () => {
+    if (isRutaDobleRef) {
+      const r1 = form.refRaw  ? "315712" + form.refRaw  : "";
+      const r2 = form.refRaw2 ? "PLZ"    + form.refRaw2 : "";
+      return (r1 && r2) ? r1 + " - " + r2 : r1 || r2;
+    }
+    return form.refRaw ? (prefijo ? prefijo + form.refRaw : form.refRaw) : "";
+  };
 
   /* ── Validación ── */
   const validate = () => {
@@ -393,10 +402,21 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
             e.ref = "Solo dígitos";
         }
       } else if (form.cliente === "White&Green") {
-        if (!form.refRaw || form.refRaw.length < 10)
-          e.ref = "Mínimo 10 caracteres";
-        else if (form.refRaw.length > 50)
-          e.ref = "Máximo 50 caracteres";
+        if (isRutaDobleRef) {
+          if (!form.refRaw || form.refRaw.length !== 4)
+            e.ref = "Ref. WG: exactamente 4 dígitos tras el prefijo 315712";
+          else if (!/^\d{4}$/.test(form.refRaw))
+            e.ref = "Ref. WG: solo dígitos";
+          if (!form.refRaw2 || form.refRaw2.length !== 7)
+            e.ref2 = "Ref. AMC: exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
+          else if (!/^\d{7}$/.test(form.refRaw2))
+            e.ref2 = "Ref. AMC: solo dígitos";
+        } else {
+          if (!form.refRaw || form.refRaw.length < 10)
+            e.ref = "Mínimo 10 caracteres";
+          else if (form.refRaw.length > 50)
+            e.ref = "Máximo 50 caracteres";
+        }
       }
     }
     // Short: reference required only if destination is NOT Bidones or Otros
@@ -636,12 +656,53 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       /* ── REFERENCIA ── */
       (form.tipo === "Acarreo" && form.ruta ||
        form.tipo === "Corto" && form.destCorto &&
-         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") &&
+         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS" ||
+       isRutaDobleRef) &&
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Referencia"),
         React.createElement("div", {className:"fld"},
-          /* White&Green, AMC rutas libres o Corto refLibre: campo libre alfanumérico sin prefijo */
-          (form.tipo === "Acarreo" && form.cliente === "White&Green") ||
+          /* WHITE&GREEN → AMC: dos referencias */
+          isRutaDobleRef
+            ? React.createElement(React.Fragment, null,
+                React.createElement("div", {className:"fld"},
+                  React.createElement("label", null, "Ref. WG"),
+                  React.createElement("div", {className:`ref-wrap${errs.ref?" er":""}`},
+                    React.createElement("div", {className:"ref-pfx"}, "315712"),
+                    React.createElement("input", {
+                      value: form.refRaw,
+                      inputMode: "numeric",
+                      placeholder: "0000",
+                      maxLength: 4,
+                      onChange: e => s("refRaw", e.target.value.replace(/\D/g,"").slice(0,4)),
+                    })
+                  ),
+                  errs.ref
+                    ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref)
+                    : form.refRaw.length === 4
+                      ? React.createElement("div",{className:"ref-hint"}, "Referencia: 315712"+form.refRaw)
+                      : null
+                ),
+                React.createElement("div", {className:"fld"},
+                  React.createElement("label", null, "Ref. AMC"),
+                  React.createElement("div", {className:`ref-wrap${errs.ref2?" er":""}`},
+                    React.createElement("div", {className:"ref-pfx"}, "PLZ"),
+                    React.createElement("input", {
+                      value: form.refRaw2,
+                      inputMode: "numeric",
+                      placeholder: "0000000",
+                      maxLength: 7,
+                      onChange: e => s("refRaw2", e.target.value.replace(/\D/g,"").slice(0,7)),
+                    })
+                  ),
+                  errs.ref2
+                    ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref2)
+                    : form.refRaw2.length === 7
+                      ? React.createElement("div",{className:"ref-hint"}, "Referencia: PLZ"+form.refRaw2)
+                      : null
+                )
+              )
+            /* White&Green otras rutas, AMC rutas libres o Corto refLibre: campo libre alfanumérico sin prefijo */
+            : (form.tipo === "Acarreo" && form.cliente === "White&Green") ||
           (form.tipo === "Acarreo" && form.cliente === "AMC" && (form.ruta === "AMC → Lineage Vlissingen" || form.ruta === "AMC → Kloosterboer")) ||
           destCortoObj?.refLibre
             ? React.createElement(React.Fragment, null,
