@@ -166,6 +166,8 @@ const RUTAS = {
     "SUPERMARITIME → AMC",
     "WHITE&GREEN → AMC",
     "AMC → WHITE&GREEN",
+    "AMC → Lineage Vlissingen",
+    "AMC → Kloosterboer",
   ],
   "White&Green": [
     "WHITE&GREEN → SUPERMARITIME",
@@ -182,8 +184,6 @@ const DESTINOS_CORTO = [
   {id:"AH_DE",  label:"AH Delfgauw",           origen:false, destino:false},
   {id:"AH_TZ",  label:"AH Tilburg + Zwolle",   origen:false, destino:false},
   {id:"AH_TL",  label:"AH Tilburg + Limburg",  origen:false, destino:false},
-  {id:"LINEAGE",     label:"Lineage Vlissingen",         origen:false, destino:false, refLibre:true},
-  {id:"KLOOSTERBOER",label:"Kloosterboer",               origen:false, destino:false, refLibre:true},
   {id:"BIDONES",label:"Bidones",               origen:true,  destino:false},
   {id:"OTROS",  label:"Otros",                 origen:true,  destino:true},
 ];
@@ -380,10 +380,18 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     /* Reference */
     if (form.tipo === "Acarreo" && form.ruta) {
       if (form.cliente === "AMC") {
-        if (!form.refRaw || form.refRaw.length !== 7)
-          e.ref = "Exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
-        else if (!/^\d{7}$/.test(form.refRaw))
-          e.ref = "Solo dígitos";
+        const rutaLibre = form.ruta === "AMC → Lineage Vlissingen" || form.ruta === "AMC → Kloosterboer";
+        if (rutaLibre) {
+          if (!form.refRaw || form.refRaw.length < 10)
+            e.ref = "Mínimo 10 caracteres";
+          else if (form.refRaw.length > 30)
+            e.ref = "Máximo 30 caracteres";
+        } else {
+          if (!form.refRaw || form.refRaw.length !== 7)
+            e.ref = "Exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
+          else if (!/^\d{7}$/.test(form.refRaw))
+            e.ref = "Solo dígitos";
+        }
       } else if (form.cliente === "White&Green") {
         if (!form.refRaw || form.refRaw.length < 10)
           e.ref = "Mínimo 10 caracteres";
@@ -632,19 +640,21 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Referencia"),
         React.createElement("div", {className:"fld"},
-          /* White&Green Acarreo o Corto refLibre: campo libre alfanumérico sin prefijo */
-          (form.tipo === "Acarreo" && form.cliente === "White&Green") || destCortoObj?.refLibre
+          /* White&Green, AMC rutas libres o Corto refLibre: campo libre alfanumérico sin prefijo */
+          (form.tipo === "Acarreo" && form.cliente === "White&Green") ||
+          (form.tipo === "Acarreo" && form.cliente === "AMC" && (form.ruta === "AMC → Lineage Vlissingen" || form.ruta === "AMC → Kloosterboer")) ||
+          destCortoObj?.refLibre
             ? React.createElement(React.Fragment, null,
                 React.createElement("input",{
                   value: form.refRaw,
-                  placeholder: destCortoObj?.refLibre ? "Mín. 10 · Máx. 30 caracteres" : "Mín. 10 · Máx. 50 caracteres",
-                  maxLength: destCortoObj?.refLibre ? 30 : 50,
+                  placeholder: form.cliente === "White&Green" ? "Mín. 10 · Máx. 50 caracteres" : "Mín. 10 · Máx. 30 caracteres",
+                  maxLength: form.cliente === "White&Green" ? 50 : 30,
                   className: errs.ref?"er":"",
-                  onChange: e => s("refRaw", e.target.value.slice(0, destCortoObj?.refLibre ? 30 : 50)),
+                  onChange: e => s("refRaw", e.target.value.slice(0, form.cliente === "White&Green" ? 50 : 30)),
                   onFocus: ()=>setRefFocus(true),
                   onBlur:  ()=>setRefFocus(false)
                 }),
-                React.createElement("div",{className:"char-c"}, form.refRaw.length+"/"+(destCortoObj?.refLibre ? 30 : 50))
+                React.createElement("div",{className:"char-c"}, form.refRaw.length+"/"+(form.cliente === "White&Green" ? 50 : 30))
               )
             /* AMC Acarreo y Cortos con OCZ: prefijo fijo + 7 dígitos */
             : React.createElement("div", {className:`ref-wrap${refFocus?" foc":""}${errs.ref?" er":""}`},
