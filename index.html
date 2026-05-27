@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURATION — admin only
    Replace TU_URL_AQUI with the real Apps Script URL
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7pKHYi986LlWQM03kVeBHTufTtkoyvKwHEJMB5v2n7EEAKa2D03xHOqOzOiKVqtdN/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/TU_URL_AQUI/exec";
 
 /* ── DEMO DATA (used only if the Sheet does not respond) ── */
 const COND_DEF  = [
@@ -175,8 +175,10 @@ const RUTAS = {
 
 /* Available destinations for SHORT type */
 const DESTINOS_CORTO = [
-  {id:"NAGEL",  label:"Nagel Bochum",          origen:false, destino:false},
-  {id:"AH_ZW",  label:"AH Zwolle",            origen:false, destino:false},
+  {id:"NAGEL",       label:"Nagel Bochum",              origen:false, destino:false},
+  {id:"LINEAGE",     label:"AMC → Lineage Vlissingen",  origen:false, destino:false, refLibre:true},
+  {id:"KLOOSTERBOER",label:"AMC → Kloosterboer",        origen:false, destino:false, refLibre:true},
+  {id:"AH_ZW",       label:"AH Zwolle",                 origen:false, destino:false},
   {id:"AH_TI",  label:"AH Tilburg",            origen:false, destino:false},
   {id:"AH_LI",  label:"AH Limburg",            origen:false, destino:false},
   {id:"AH_DE",  label:"AH Delfgauw",           origen:false, destino:false},
@@ -389,13 +391,20 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
           e.ref = "Máximo 50 caracteres";
       }
     }
-    // Short: reference required only if destination is NOT Barrels or Others
+    // Short: reference required only if destination is NOT Bidones or Otros
     if (form.tipo === "Corto" && form.destCorto &&
         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") {
-      if (!form.refRaw || form.refRaw.length !== 7)
-        e.ref = "Exactamente 7 dígitos (prefijo OCZ añadido automáticamente)";
-      else if (!/^\d{7}$/.test(form.refRaw))
-        e.ref = "Solo dígitos";
+      if (destCortoObj?.refLibre) {
+        if (!form.refRaw || form.refRaw.length < 10)
+          e.ref = "Mínimo 10 caracteres";
+        else if (form.refRaw.length > 30)
+          e.ref = "Máximo 30 caracteres";
+      } else {
+        if (!form.refRaw || form.refRaw.length !== 7)
+          e.ref = "Exactamente 7 dígitos (prefijo OCZ añadido automáticamente)";
+        else if (!/^\d{7}$/.test(form.refRaw))
+          e.ref = "Solo dígitos";
+      }
     }
 
     return e;
@@ -623,21 +632,21 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Referencia"),
         React.createElement("div", {className:"fld"},
-          /* White&Green Acarreo: campo libre alfanumérico sin prefijo */
-          form.tipo === "Acarreo" && form.cliente === "White&Green"
+          /* White&Green Acarreo o Corto refLibre: campo libre alfanumérico sin prefijo */
+          (form.tipo === "Acarreo" && form.cliente === "White&Green") || destCortoObj?.refLibre
             ? React.createElement(React.Fragment, null,
                 React.createElement("input",{
                   value: form.refRaw,
-                  placeholder: "Mín. 10 · Máx. 50 caracteres",
-                  maxLength: 50,
+                  placeholder: destCortoObj?.refLibre ? "Mín. 10 · Máx. 30 caracteres" : "Mín. 10 · Máx. 50 caracteres",
+                  maxLength: destCortoObj?.refLibre ? 30 : 50,
                   className: errs.ref?"er":"",
-                  onChange: e => s("refRaw", e.target.value.slice(0,50)),
+                  onChange: e => s("refRaw", e.target.value.slice(0, destCortoObj?.refLibre ? 30 : 50)),
                   onFocus: ()=>setRefFocus(true),
                   onBlur:  ()=>setRefFocus(false)
                 }),
-                React.createElement("div",{className:"char-c"}, form.refRaw.length+"/50")
+                React.createElement("div",{className:"char-c"}, form.refRaw.length+"/"+(destCortoObj?.refLibre ? 30 : 50))
               )
-            /* AMC Acarreo y cualquier Corto: prefijo fijo + 7 dígitos */
+            /* AMC Acarreo y Cortos con OCZ: prefijo fijo + 7 dígitos */
             : React.createElement("div", {className:`ref-wrap${refFocus?" foc":""}${errs.ref?" er":""}`},
                 React.createElement("div", {className:"ref-pfx"}, prefijo),
                 React.createElement("input",{
