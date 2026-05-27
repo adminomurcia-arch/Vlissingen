@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURATION — admin only
    Replace TU_URL_AQUI with the real Apps Script URL
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7pKHYi986LlWQM03kVeBHTufTtkoyvKwHEJMB5v2n7EEAKa2D03xHOqOzOiKVqtdN/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznodo5fhB9ljjGh70A7vpgbEOAkqicTZg_Tj1N5StSEwNWts1JVNgcpi0lOX6O1beU/exec";
 
 /* ── DEMO DATA (used only if the Sheet does not respond) ── */
 const COND_DEF  = [
@@ -304,7 +304,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     destCorto:"",                     // id del destino CORTO seleccionado
     origen:"", destino:"",            // campos libres para Bidones/Otros
     fechaCarga: fmtNow(), fechaDescarga:"",
-    refRaw:"", refRaw2:"", cmrFile:null
+    refRaw:"", refRaw2:"", cmrFiles:[]
   });
   const [errs,     setErrs]     = useState({});
   const [refFocus, setRefFocus] = useState(false);
@@ -384,7 +384,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     }
 
     /* CMR required */
-    if (!form.cmrFile) e.cmr = "Adjunta el CMR (foto o documento)";
+    if (!form.cmrFiles || form.cmrFiles.length === 0) e.cmr = "Adjunta el CMR (foto o documento)";
 
     /* Reference */
     if (form.tipo === "Acarreo" && form.ruta) {
@@ -447,12 +447,14 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     submitting.current = true;
     setBusy(true);
     try {
-      let cmrBase64="", cmrType="", cmrName="";
-      if (form.cmrFile) {
-        cmrBase64 = await f2b64(form.cmrFile);
-        cmrType   = form.cmrFile.type;
-        cmrName   = form.cmrFile.name;
-      }
+      /* Convertir todos los archivos CMR a base64 */
+      const cmrFiles = form.cmrFiles || [];
+      const cmrItems = await Promise.all(cmrFiles.map(async (file, i) => ({
+        cmrBase64: await f2b64(file),
+        cmrType:   file.type,
+        cmrName:   file.name,
+        index:     i
+      })));
       /* Build destination and route by type */
       const esCorto   = form.tipo === "Corto";
       const dObj      = DESTINOS_CORTO.find(d => d.id === form.destCorto);
@@ -472,7 +474,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         fechaCarga:    form.fechaCarga.replace("T"," "),
         fechaDescarga: form.fechaDescarga.replace("T"," "),
         referencia:    getReference(),
-        cmrBase64, cmrType, cmrName
+        cmrItems
       };
 
       /* Send completely in background — does not block or show errors to driver */
@@ -741,20 +743,30 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       /* ── CMR (obligatorio) ── */
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "CMR"),
-        React.createElement("div", {className:`cmr${form.cmrFile?" on":""}${errs.cmr?" er":""}`, onClick:()=>fileRef.current.click()},
-          React.createElement("div",{className:"cmr-ic"}, form.cmrFile ? "📄" : "📷"),
+        React.createElement("div", {className:`cmr${form.cmrFiles.length>0?" on":""}${errs.cmr?" er":""}`, onClick:()=>fileRef.current.click()},
+          React.createElement("div",{className:"cmr-ic"}, form.cmrFiles.length>0 ? "📄" : "📷"),
           React.createElement("div",{className:"cmr-tx"},
-            form.cmrFile ? "Archivo adjunto:" : "Toca para seleccionar imagen, PDF o hacer una foto"
+            form.cmrFiles.length>0
+              ? `${form.cmrFiles.length} archivo${form.cmrFiles.length>1?"s":""} adjunto${form.cmrFiles.length>1?"s":""} — toca para añadir más`
+              : "Toca para seleccionar imagen, PDF o hacer una foto"
           ),
-          form.cmrFile && React.createElement("div",{className:"cmr-nm"},"✓ "+form.cmrFile.name)
+          form.cmrFiles.length>0 && React.createElement("div",{className:"cmr-nm"},
+            form.cmrFiles.map((f,i) => React.createElement("div",{key:i},"✓ "+f.name))
+          )
         ),
         React.createElement("input",{ref:fileRef, type:"file", style:{display:"none"},
-          accept:"image/*,application/pdf", capture:"environment",
-          onChange:e=>{if(e.target.files[0]) s("cmrFile",e.target.files[0]);}}),
+          accept:"image/*,application/pdf", multiple:true,
+          onChange:e=>{
+            if(e.target.files && e.target.files.length>0) {
+              const nuevos = Array.from(e.target.files);
+              s("cmrFiles", [...form.cmrFiles, ...nuevos]);
+              fileRef.current.value="";
+            }
+          }}),
         errs.cmr && React.createElement("div",{className:"emsg",style:{marginTop:8,justifyContent:"center"}},"⚠ "+errs.cmr),
-        form.cmrFile && React.createElement("button",{className:"clr-btn",
-          onClick:e=>{e.stopPropagation();s("cmrFile",null);if(fileRef.current)fileRef.current.value="";}},
-          "✕ Quitar archivo")
+        form.cmrFiles.length>0 && React.createElement("button",{className:"clr-btn",
+          onClick:e=>{e.stopPropagation();s("cmrFiles",[]);if(fileRef.current)fileRef.current.value="";}},
+          "✕ Quitar todos los archivos")
       ),
 
       errs.submit && React.createElement("div",{className:"emsg",style:{marginBottom:14,textAlign:"center"}},"⚠ "+errs.submit),
