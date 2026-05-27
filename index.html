@@ -40,9 +40,10 @@
     .sec-ttl::before{content:'';display:block;width:3px;height:16px;background:var(--amber);border-radius:2px;flex-shrink:0}
     .fld{margin-bottom:14px}
     .fld label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}
-    .fld input,.fld select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
-    .fld input:focus,.fld select:focus{border-color:var(--amber)}
+    .fld input,.fld select,.fld textarea{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+    .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--amber)}
     .fld input.er,.fld select.er{border-color:var(--err)}
+    .fld textarea{resize:vertical;min-height:90px;line-height:1.5}
     .fld select option{background:#1c2230}
     .emsg{color:var(--err);font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -147,7 +148,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURATION — admin only
    Replace TU_URL_AQUI with the real Apps Script URL
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznodo5fhB9ljjGh70A7vpgbEOAkqicTZg_Tj1N5StSEwNWts1JVNgcpi0lOX6O1beU/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfOQw7_rAO8Xnxo-d5ABFt0bfL9eEjv6_sKtCmGMfiTGkRcn6CiFKllLlejd5Htp5M/exec";
 
 /* ── DEMO DATA (used only if the Sheet does not respond) ── */
 const COND_DEF  = [
@@ -304,7 +305,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     destCorto:"",                     // id del destino CORTO seleccionado
     origen:"", destino:"",            // campos libres para Bidones/Otros
     fechaCarga: fmtNow(), fechaDescarga:"",
-    refRaw:"", refRaw2:"", cmrFiles:[]
+    refRaw:"", refRaw2:"", comentarios:"", cmrFiles:[]
   });
   const [errs,     setErrs]     = useState({});
   const [refFocus, setRefFocus] = useState(false);
@@ -474,6 +475,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         fechaCarga:    form.fechaCarga.replace("T"," "),
         fechaDescarga: form.fechaDescarga.replace("T"," "),
         referencia:    getReference(),
+        comentarios:   form.comentarios || "",
         cmrItems
       };
 
@@ -737,6 +739,20 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
             : prefijo && form.refRaw.length === 7
               ? React.createElement("div",{className:"ref-hint"}, "Referencia: "+prefijo+form.refRaw)
               : null
+        )
+      ),
+
+      /* ── COMENTARIOS ── */
+      React.createElement("div", {className:"sec"},
+        React.createElement("div", {className:"sec-ttl"}, "Comentarios / Observaciones"),
+        React.createElement("div", {className:"fld"},
+          React.createElement("textarea", {
+            value: form.comentarios,
+            placeholder: "Escriba cualquier comentario/información que quiera transmitir",
+            maxLength: 500,
+            onChange: e => s("comentarios", e.target.value)
+          }),
+          React.createElement("div", {className:"char-c"}, form.comentarios.length+"/500")
         )
       ),
 
