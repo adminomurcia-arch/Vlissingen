@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="theme-color" content="#0d1117"/>
+  <meta name="theme-color" content="#1e293b"/>
   <title>Vlissingen Opstal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -13,70 +13,151 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     :root{
-      --bg:#0d1117;--card:#161b22;--card2:#1c2230;--border:#30363d;
-      --amber:#f0a500;--amber2:#fbbf24;--text:#e6edf3;--muted:#7d8590;
-      --err:#f85149;--ok:#3fb950;--info:#58a6ff;
-      --font-h:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;
+      /* ── Paleta: deep navy + teal ── */
+      --bg:#1e293b;
+      --card:#263348;
+      --card2:#2d3e56;
+      --border:#3a5068;
+      --accent:#00c2a8;       /* teal principal */
+      --accent2:#34d9c3;      /* teal claro hover */
+      --text:#e8f0fe;
+      --muted:#6b82a0;
+      --err:#f87171;
+      --ok:#4ade80;
+      --font-h:'Barlow Condensed',sans-serif;
+      --font-b:'Barlow',sans-serif;
     }
     html,body{height:100%;background:var(--bg)}
     #root{min-height:100vh}
     .app{min-height:100vh;background:var(--bg);font-family:var(--font-b);color:var(--text);font-size:15px}
-    .hdr{background:var(--card);border-bottom:2px solid var(--amber);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}
-    .logo{font-family:var(--font-h);font-weight:800;font-size:20px;letter-spacing:2px;color:var(--amber)}
+
+    /* ── Header ── */
+    .hdr{
+      background:linear-gradient(135deg,#1e3a5f 0%,#243b55 100%);
+      border-bottom:2px solid var(--accent);
+      padding:16px 18px;
+      display:flex;align-items:center;justify-content:center;
+      position:sticky;top:0;z-index:99;
+    }
+    .logo{
+      font-family:var(--font-h);font-weight:800;font-size:22px;
+      letter-spacing:3px;color:var(--accent);text-align:center;
+    }
     .logo b{color:var(--text);font-weight:800}
-    .hdr-right{display:flex;align-items:center;gap:8px}
-    .sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .sync-dot.ok{background:var(--ok)}.sync-dot.err{background:var(--err)}.sync-dot.idle{background:var(--muted)}.sync-dot.loading{background:var(--amber);animation:pulse 1s infinite}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ── Page title badge ── */
+    .page-title{
+      text-align:center;
+      padding:28px 18px 6px;
+    }
+    .page-title-lbl{
+      font-family:var(--font-h);font-weight:800;font-size:36px;
+      letter-spacing:6px;color:var(--text);text-transform:uppercase;
+      display:inline-block;
+      border-bottom:3px solid var(--accent);
+      padding-bottom:6px;
+    }
+    .page-title-sub{
+      font-size:12px;color:var(--muted);letter-spacing:2px;
+      text-transform:uppercase;margin-top:8px;
+    }
 
     .body{padding:18px;max-width:520px;margin:0 auto;padding-bottom:90px}
     .banner{border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:0;text-align:center}
-    .banner.warn{background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.25);color:var(--amber)}
+    .banner.warn{background:rgba(0,194,168,.08);border:1px solid rgba(0,194,168,.3);color:var(--accent)}
 
+    /* ── Sections ── */
     .sec{margin-bottom:26px}
-    .sec-ttl{font-family:var(--font-h);font-weight:700;font-size:12px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;gap:9px}
-    .sec-ttl::before{content:'';display:block;width:3px;height:16px;background:var(--amber);border-radius:2px;flex-shrink:0}
+    .sec-ttl{
+      font-family:var(--font-h);font-weight:700;font-size:12px;
+      letter-spacing:3px;color:var(--accent);text-transform:uppercase;
+      margin-bottom:13px;display:flex;align-items:center;gap:9px;
+    }
+    .sec-ttl::before{
+      content:'';display:block;width:3px;height:16px;
+      background:var(--accent);border-radius:2px;flex-shrink:0;
+    }
+
+    /* ── Fields ── */
     .fld{margin-bottom:14px}
-    .fld label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}
-    .fld input,.fld select,.fld textarea{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
-    .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--amber)}
+    .fld label{
+      display:block;font-size:11px;font-weight:600;color:var(--muted);
+      letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px;
+    }
+    .fld input,.fld select,.fld textarea{
+      width:100%;background:var(--card2);border:1.5px solid var(--border);
+      border-radius:10px;padding:12px 14px;color:var(--text);
+      font-family:var(--font-b);font-size:15px;outline:none;
+      transition:border-color .2s;-webkit-appearance:none;appearance:none;
+    }
+    .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
     .fld input.er,.fld select.er,.fld textarea.er{border-color:var(--err)}
     .fld textarea{resize:vertical;min-height:90px;line-height:1.5}
-    .fld select option{background:#1c2230}
+    .fld select option{background:#2d3e56}
     .emsg{color:var(--err);font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+    .char-c{font-size:11px;color:var(--muted);margin-top:3px;text-align:right}
 
     /* ── Picks ── */
     .pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
     .pick-col{display:grid;grid-template-columns:1fr;gap:9px}
-    .pick{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;text-align:center;cursor:pointer;transition:all .18s;user-select:none}
+    .pick{
+      background:var(--card2);border:1.5px solid var(--border);
+      border-radius:10px;padding:13px 14px;text-align:center;
+      cursor:pointer;transition:all .18s;user-select:none;
+    }
     .pick:active{transform:scale(.97)}
-    .pick.on{border-color:var(--amber);background:rgba(240,165,0,.1)}
+    .pick.on{border-color:var(--accent);background:rgba(0,194,168,.1)}
     .pick-lbl{font-family:var(--font-h);font-weight:700;font-size:15px;letter-spacing:.5px}
     .pick-sub{font-size:11px;color:var(--muted);margin-top:2px}
 
     /* ── Reference ── */
-    .ref-wrap{display:flex;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s}
-    .ref-wrap.foc{border-color:var(--amber)}.ref-wrap.er{border-color:var(--err)}
-    .ref-pfx{padding:12px 13px;background:rgba(240,165,0,.12);color:var(--amber2);font-family:var(--font-h);font-weight:700;font-size:16px;border-right:1px solid var(--border);white-space:nowrap;display:flex;align-items:center}
-    .ref-wrap input{border:none;border-radius:0;background:transparent;flex:1;min-width:0;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none}
+    .ref-wrap{
+      display:flex;background:var(--card2);border:1.5px solid var(--border);
+      border-radius:10px;overflow:hidden;transition:border-color .2s;
+    }
+    .ref-wrap.foc{border-color:var(--accent)}.ref-wrap.er{border-color:var(--err)}
+    .ref-pfx{
+      padding:12px 13px;background:rgba(0,194,168,.12);color:var(--accent2);
+      font-family:var(--font-h);font-weight:700;font-size:16px;
+      border-right:1px solid var(--border);white-space:nowrap;display:flex;align-items:center;
+    }
+    .ref-wrap input{
+      border:none;border-radius:0;background:transparent;flex:1;min-width:0;
+      padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;
+    }
     .ref-hint{font-size:11px;color:var(--muted);margin-top:4px}
-    .char-c{font-size:11px;color:var(--muted);margin-top:3px;text-align:right}
 
     /* ── CMR ── */
-    .cmr{border:2px dashed var(--border);border-radius:12px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s}
-    .cmr:hover,.cmr.on{border-color:var(--amber);background:rgba(240,165,0,.04)}
+    .cmr{
+      border:2px dashed var(--border);border-radius:12px;
+      padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s;
+    }
+    .cmr:hover,.cmr.on{border-color:var(--accent);background:rgba(0,194,168,.04)}
     .cmr.er{border-color:var(--err)}
     .cmr-ic{font-size:32px;margin-bottom:8px}
     .cmr-tx{color:var(--muted);font-size:13px;line-height:1.5}
-    .cmr-nm{color:var(--amber2);font-weight:600;margin-top:7px;font-size:13px;word-break:break-all}
-    .clr-btn{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:7px;padding:0;font-family:var(--font-b)}
+    .cmr-nm{color:var(--accent2);font-weight:600;margin-top:7px;font-size:13px;word-break:break-all}
+    .clr-btn{
+      background:none;border:none;color:var(--muted);font-size:12px;
+      cursor:pointer;margin-top:7px;padding:0;font-family:var(--font-b);
+    }
     .clr-btn:hover{color:var(--err)}
 
-    /* ── Main buttons ── */
-    .sub-btn{width:100%;background:var(--amber);color:#000;font-family:var(--font-h);font-weight:800;font-size:19px;letter-spacing:2px;padding:17px;border:none;border-radius:13px;cursor:pointer;transition:all .2s;text-transform:uppercase}
-    .sub-btn:hover{background:var(--amber2)}.sub-btn:disabled{opacity:.45;cursor:not-allowed}
-    .new-btn{width:100%;background:var(--amber);color:#000;font-family:var(--font-h);font-weight:800;font-size:17px;letter-spacing:2px;padding:17px;border:none;border-radius:13px;cursor:pointer}
+    /* ── Buttons ── */
+    .sub-btn{
+      width:100%;background:var(--accent);color:#000;
+      font-family:var(--font-h);font-weight:800;font-size:19px;
+      letter-spacing:2px;padding:17px;border:none;border-radius:13px;
+      cursor:pointer;transition:all .2s;text-transform:uppercase;
+    }
+    .sub-btn:hover{background:var(--accent2)}
+    .sub-btn:disabled{opacity:.45;cursor:not-allowed}
+    .new-btn{
+      width:100%;background:var(--accent);color:#000;
+      font-family:var(--font-h);font-weight:800;font-size:17px;
+      letter-spacing:2px;padding:17px;border:none;border-radius:13px;cursor:pointer;
+    }
 
     /* ── Success screen ── */
     .suc-body{padding:36px 22px;max-width:480px;margin:0 auto;text-align:center}
@@ -101,7 +182,7 @@
     s.onload = onload;
     s.onerror = function() {
       document.getElementById('root').innerHTML =
-        '<div style="color:#f85149;font-family:sans-serif;padding:32px;text-align:center">' +
+        '<div style="color:#f87171;font-family:sans-serif;padding:32px;text-align:center">' +
         '⚠ Could not load React.<br>Check your internet connection.</div>';
     };
     document.head.appendChild(s);
@@ -119,7 +200,6 @@ const {useState, useRef} = React;
 /* ══════════════════════════════════════════════════════════
    CONFIGURATION — admin only
    Same SCRIPT_URL as the main Portes Vlissingen app.
-   The payload includes fuente:"Opstal" so rows are identifiable.
    ══════════════════════════════════════════════════════════ */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfOQw7_rAO8Xnxo-d5ABFt0bfL9eEjv6_sKtCmGMfiTGkRcn6CiFKllLlejd5Htp5M/exec";
 
@@ -140,19 +220,13 @@ const RUTAS = {
   ],
 };
 
-/* ── Reference prefix ── */
-const getPrefijo = (cliente, ruta) => {
-  if (cliente === "AMC") {
-    const freeRef = ruta === "AMC → Lineage Vlissingen" || ruta === "AMC → Kloosterboer";
-    return freeRef ? null : "PLZ";
-  }
-  return null; // White&Green: always free text
-};
-
 const isRutaDobleRef = (cliente, ruta) =>
   cliente === "White&Green" && ruta === "WHITE&GREEN → AMC";
 
-/* ── Helpers ── */
+const isFreeRef = (cliente, ruta) =>
+  (cliente === "White&Green" && ruta !== "WHITE&GREEN → AMC") ||
+  (cliente === "AMC" && (ruta === "AMC → Lineage Vlissingen" || ruta === "AMC → Kloosterboer"));
+
 const fmtNow = () => {
   const d = new Date(), p = n => String(n).padStart(2,"0");
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -178,17 +252,16 @@ function Pick({label, sub, active, onClick}) {
    SCREEN: Form
    ══════════════════════════════════════════════════════════ */
 function FormScreen({onOk}) {
-  const empty = {
+  const [form, setForm] = useState({
     nombre:"", tractora:"", remolque:"",
     cliente:"", ruta:"",
     refRaw:"", refRaw2:"",
     fechaCarga: fmtNow(), fechaDescarga:"",
     comentarios:"", cmrFiles:[]
-  };
-  const [form, setForm] = useState(empty);
-  const [errs, setErrs] = useState({});
+  });
+  const [errs,     setErrs]     = useState({});
   const [refFocus, setRefFocus] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy,     setBusy]     = useState(false);
   const fileRef    = useRef(null);
   const submitting = useRef(false);
   const s = (k,v) => setForm(f => ({...f, [k]:v}));
@@ -196,11 +269,8 @@ function FormScreen({onOk}) {
   const onCliente = v => setForm(f => ({...f, cliente:v, ruta:"", refRaw:"", refRaw2:""}));
   const onRuta    = v => setForm(f => ({...f, ruta:v,    refRaw:"", refRaw2:""}));
 
-  const rutasDisponibles = RUTAS[form.cliente] || [];
-  const dobleRef  = isRutaDobleRef(form.cliente, form.ruta);
-  const prefijo   = getPrefijo(form.cliente, form.ruta);
-  const isFreeRef = form.cliente === "White&Green" && !dobleRef
-                  || (form.cliente === "AMC" && (form.ruta === "AMC → Lineage Vlissingen" || form.ruta === "AMC → Kloosterboer"));
+  const dobleRef = isRutaDobleRef(form.cliente, form.ruta);
+  const freeRef  = isFreeRef(form.cliente, form.ruta);
 
   const getReference = () => {
     if (dobleRef) {
@@ -208,7 +278,8 @@ function FormScreen({onOk}) {
       const r2 = form.refRaw2 ? "PLZ"    + form.refRaw2 : "";
       return (r1 && r2) ? r1 + " - " + r2 : r1 || r2;
     }
-    return form.refRaw ? (prefijo ? prefijo + form.refRaw : form.refRaw) : "";
+    if (freeRef) return form.refRaw;
+    return form.refRaw ? "PLZ" + form.refRaw : "";
   };
 
   /* ── Validation ── */
@@ -236,7 +307,6 @@ function FormScreen({onOk}) {
     if (!form.cmrFiles || form.cmrFiles.length === 0)
       e.cmr = "Attach the CMR (photo or document)";
 
-    /* Reference */
     if (form.ruta) {
       if (dobleRef) {
         if (!form.refRaw || form.refRaw.length !== 4)
@@ -247,13 +317,13 @@ function FormScreen({onOk}) {
           e.ref2 = "AMC Ref: exactly 7 digits (PLZ prefix added automatically)";
         else if (!/^\d{7}$/.test(form.refRaw2))
           e.ref2 = "AMC Ref: digits only";
-      } else if (isFreeRef) {
+      } else if (freeRef) {
         const max = form.cliente === "White&Green" ? 50 : 30;
         if (!form.refRaw || form.refRaw.length < 10)
           e.ref = "Minimum 10 characters";
         else if (form.refRaw.length > max)
           e.ref = `Maximum ${max} characters`;
-      } else if (prefijo) {
+      } else {
         if (!form.refRaw || form.refRaw.length !== 7)
           e.ref = "Exactly 7 digits (PLZ prefix added automatically)";
         else if (!/^\d{7}$/.test(form.refRaw))
@@ -273,7 +343,7 @@ function FormScreen({onOk}) {
     submitting.current = true;
     setBusy(true);
     try {
-      const cmrItems = await Promise.all((form.cmrFiles || []).map(async (file, i) => ({
+      const cmrItems = await Promise.all((form.cmrFiles||[]).map(async (file,i) => ({
         cmrBase64: await f2b64(file),
         cmrType:   file.type,
         cmrName:   file.name,
@@ -281,8 +351,8 @@ function FormScreen({onOk}) {
       })));
 
       const payload = {
-        fuente:        "Opstal",          // identifier for the Apps Script
-        codigo:        "",                // no driver code in this interface
+        fuente:        "Opstal",
+        codigo:        "",
         nombre:        form.nombre.trim(),
         tractora:      form.tractora.trim(),
         remolque:      form.remolque.trim(),
@@ -301,7 +371,6 @@ function FormScreen({onOk}) {
         fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(payload), mode:"no-cors"})
           .catch(() => {});
       }
-
       onOk({payload, demo: isDemo()});
     } catch(err) {
       setErrs(ex => ({...ex, submit:"Unexpected error: " + err.message}));
@@ -310,22 +379,29 @@ function FormScreen({onOk}) {
     }
   };
 
-  /* ─── Render ─── */
   return React.createElement("div", {className:"app"},
 
     /* Header */
     React.createElement("div", {className:"hdr"},
-      React.createElement("div", {className:"logo"}, "VLISSINGEN ", React.createElement("b",null,"OPSTAL"))
+      React.createElement("div", {className:"logo"},
+        "VLISSINGEN ", React.createElement("b", null, "OPSTAL")
+      )
+    ),
+
+    /* Static page title */
+    React.createElement("div", {className:"page-title"},
+      React.createElement("div", {className:"page-title-lbl"}, "OPSTAL"),
+      React.createElement("div", {className:"page-title-sub"}, "Haulage Registration")
     ),
 
     isDemo() && React.createElement("div", {
       className:"banner warn",
-      style:{margin:"12px 18px 0"}
+      style:{margin:"16px 18px 0"}
     }, "⚠ Demo mode — configure SCRIPT_URL in the code"),
 
     React.createElement("div", {className:"body"},
 
-      /* ── Driver ── */
+      /* ── Driver name ── */
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Driver"),
         React.createElement("div", {className:"fld"},
@@ -374,8 +450,8 @@ function FormScreen({onOk}) {
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Client"),
         React.createElement("div", {className:"pick-grid"},
-          React.createElement(Pick, {label:"AMC",           active:form.cliente==="AMC",         onClick:()=>onCliente("AMC")}),
-          React.createElement(Pick, {label:"White & Green", active:form.cliente==="White&Green",  onClick:()=>onCliente("White&Green")})
+          React.createElement(Pick, {label:"AMC",           active:form.cliente==="AMC",        onClick:()=>onCliente("AMC")}),
+          React.createElement(Pick, {label:"White & Green", active:form.cliente==="White&Green", onClick:()=>onCliente("White&Green")})
         ),
         errs.cliente && React.createElement("div",{className:"emsg",style:{marginTop:5}},"⚠ "+errs.cliente)
       ),
@@ -384,7 +460,7 @@ function FormScreen({onOk}) {
       form.cliente && React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Route"),
         React.createElement("div", {className:"pick-col"},
-          rutasDisponibles.map(r =>
+          (RUTAS[form.cliente]||[]).map(r =>
             React.createElement(Pick, {key:r, label:r, active:form.ruta===r, onClick:()=>onRuta(r)})
           )
         ),
@@ -398,115 +474,98 @@ function FormScreen({onOk}) {
           React.createElement("div", {className:"fld"},
             React.createElement("label", null, "Loading Date / Time"),
             React.createElement("input",{
-              type:"datetime-local",
-              value:form.fechaCarga,
-              max: fmtNow(),
+              type:"datetime-local", value:form.fechaCarga, max:fmtNow(),
               onChange: e => {
                 const v = e.target.value;
                 s("fechaCarga", v);
                 if (form.fechaDescarga && v > form.fechaDescarga) s("fechaDescarga","");
               },
-              className: errs.fechaCarga ? "er" : "",
-              style:{colorScheme:"dark"}
+              className: errs.fechaCarga?"er":"", style:{colorScheme:"dark"}
             }),
             errs.fechaCarga && React.createElement("div",{className:"emsg"},"⚠ "+errs.fechaCarga)
           ),
           React.createElement("div", {className:"fld"},
             React.createElement("label", null, "Unloading Date / Time"),
             React.createElement("input",{
-              type:"datetime-local",
-              value:form.fechaDescarga,
+              type:"datetime-local", value:form.fechaDescarga,
               min: form.fechaCarga || undefined,
               onChange: e => s("fechaDescarga", e.target.value),
-              className: errs.fechaDescarga ? "er" : "",
-              style:{colorScheme:"dark"}
+              className: errs.fechaDescarga?"er":"", style:{colorScheme:"dark"}
             }),
             errs.fechaDescarga && React.createElement("div",{className:"emsg"},"⚠ "+errs.fechaDescarga)
           )
         )
       ),
 
-      /* ── Reference (shown once a route is selected) ── */
+      /* ── Reference ── */
       form.ruta && React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Reference"),
         React.createElement("div", {className:"fld"},
 
-          /* WHITE&GREEN → AMC: two references */
           dobleRef
             ? React.createElement(React.Fragment, null,
+                /* WG ref */
                 React.createElement("div", {className:"fld"},
                   React.createElement("label", null, "WG Ref"),
                   React.createElement("div", {className:`ref-wrap${errs.ref?" er":""}`},
                     React.createElement("div", {className:"ref-pfx"}, "315712"),
                     React.createElement("input", {
-                      value: form.refRaw,
-                      inputMode: "numeric",
-                      placeholder: "0000",
-                      maxLength: 4,
-                      onChange: e => s("refRaw", e.target.value.replace(/\D/g,"").slice(0,4))
+                      value:form.refRaw, inputMode:"numeric", placeholder:"0000", maxLength:4,
+                      onChange:e=>s("refRaw",e.target.value.replace(/\D/g,"").slice(0,4))
                     })
                   ),
                   errs.ref
                     ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref)
-                    : form.refRaw.length === 4
+                    : form.refRaw.length===4
                       ? React.createElement("div",{className:"ref-hint"},"Reference: 315712"+form.refRaw)
                       : null
                 ),
+                /* AMC ref */
                 React.createElement("div", {className:"fld"},
                   React.createElement("label", null, "AMC Ref"),
                   React.createElement("div", {className:`ref-wrap${errs.ref2?" er":""}`},
                     React.createElement("div", {className:"ref-pfx"}, "PLZ"),
                     React.createElement("input", {
-                      value: form.refRaw2,
-                      inputMode: "numeric",
-                      placeholder: "0000000",
-                      maxLength: 7,
-                      onChange: e => s("refRaw2", e.target.value.replace(/\D/g,"").slice(0,7))
+                      value:form.refRaw2, inputMode:"numeric", placeholder:"0000000", maxLength:7,
+                      onChange:e=>s("refRaw2",e.target.value.replace(/\D/g,"").slice(0,7))
                     })
                   ),
                   errs.ref2
                     ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref2)
-                    : form.refRaw2.length === 7
+                    : form.refRaw2.length===7
                       ? React.createElement("div",{className:"ref-hint"},"Reference: PLZ"+form.refRaw2)
                       : null
                 )
               )
 
-            /* Free-text reference (White&Green other routes / Lineage / Kloosterboer) */
-            : isFreeRef
+            : freeRef
               ? React.createElement(React.Fragment, null,
                   React.createElement("input",{
-                    value: form.refRaw,
+                    value:form.refRaw,
                     placeholder: form.cliente==="White&Green" ? "Min. 10 · Max. 50 characters" : "Min. 10 · Max. 30 characters",
                     maxLength: form.cliente==="White&Green" ? 50 : 30,
-                    className: errs.ref ? "er" : "",
-                    onChange: e => s("refRaw", e.target.value.slice(0, form.cliente==="White&Green" ? 50 : 30)),
-                    onFocus: ()=>setRefFocus(true),
-                    onBlur:  ()=>setRefFocus(false)
+                    className: errs.ref?"er":"",
+                    onChange:e=>s("refRaw",e.target.value.slice(0,form.cliente==="White&Green"?50:30)),
+                    onFocus:()=>setRefFocus(true), onBlur:()=>setRefFocus(false)
                   }),
                   React.createElement("div",{className:"char-c"},
-                    form.refRaw.length+"/"+(form.cliente==="White&Green" ? 50 : 30)
+                    form.refRaw.length+"/"+(form.cliente==="White&Green"?50:30)
                   ),
                   errs.ref && React.createElement("div",{className:"emsg"},"⚠ "+errs.ref)
                 )
 
-              /* Standard AMC: PLZ prefix + 7 digits */
               : React.createElement(React.Fragment, null,
-                  React.createElement("div", {className:`ref-wrap${refFocus?" foc":""}${errs.ref?" er":""}`},
-                    React.createElement("div", {className:"ref-pfx"}, "PLZ"),
+                  React.createElement("div",{className:`ref-wrap${refFocus?" foc":""}${errs.ref?" er":""}`},
+                    React.createElement("div",{className:"ref-pfx"},"PLZ"),
                     React.createElement("input",{
-                      value: form.refRaw,
-                      inputMode: "numeric",
-                      placeholder: "0000000",
-                      maxLength: 7,
-                      onChange: e => s("refRaw", e.target.value.replace(/\D/g,"").slice(0,7)),
-                      onFocus: ()=>setRefFocus(true),
-                      onBlur:  ()=>setRefFocus(false)
+                      value:form.refRaw, inputMode:"numeric", placeholder:"0000000", maxLength:7,
+                      onChange:e=>s("refRaw",e.target.value.replace(/\D/g,"").slice(0,7)),
+                      onFocus:()=>setRefFocus(true), onBlur:()=>setRefFocus(false)
                     })
                   ),
                   errs.ref
                     ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref)
-                    : form.refRaw.length === 7
+                    : form.refRaw.length===7
                       ? React.createElement("div",{className:"ref-hint"},"Reference: PLZ"+form.refRaw)
                       : null
                 )
@@ -518,38 +577,38 @@ function FormScreen({onOk}) {
         React.createElement("div", {className:"sec-ttl"}, "Comments / Notes"),
         React.createElement("div", {className:"fld"},
           React.createElement("textarea", {
-            value: form.comentarios,
-            placeholder: "Enter any comment or information you want to pass on",
-            maxLength: 500,
-            onChange: e => s("comentarios", e.target.value)
+            value:form.comentarios,
+            placeholder:"Enter any comment or information you want to pass on",
+            maxLength:500,
+            onChange:e=>s("comentarios",e.target.value)
           }),
-          React.createElement("div",{className:"char-c"}, form.comentarios.length+"/500")
+          React.createElement("div",{className:"char-c"},form.comentarios.length+"/500")
         )
       ),
 
-      /* ── CMR (required) ── */
+      /* ── CMR ── */
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "CMR"),
-        React.createElement("div", {
+        React.createElement("div",{
           className:`cmr${form.cmrFiles.length>0?" on":""}${errs.cmr?" er":""}`,
           onClick:()=>fileRef.current.click()
         },
-          React.createElement("div",{className:"cmr-ic"}, form.cmrFiles.length>0 ? "📄" : "📷"),
+          React.createElement("div",{className:"cmr-ic"},form.cmrFiles.length>0?"📄":"📷"),
           React.createElement("div",{className:"cmr-tx"},
             form.cmrFiles.length>0
               ? `${form.cmrFiles.length} file${form.cmrFiles.length>1?"s":""} attached — tap to add more`
               : "Tap to select an image, PDF or take a photo"
           ),
           form.cmrFiles.length>0 && React.createElement("div",{className:"cmr-nm"},
-            form.cmrFiles.map((f,i) => React.createElement("div",{key:i},"✓ "+f.name))
+            form.cmrFiles.map((f,i)=>React.createElement("div",{key:i},"✓ "+f.name))
           )
         ),
         React.createElement("input",{
           ref:fileRef, type:"file", style:{display:"none"},
           accept:"image/*,application/pdf", multiple:true,
           onChange:e=>{
-            if(e.target.files && e.target.files.length>0){
-              s("cmrFiles",[...form.cmrFiles, ...Array.from(e.target.files)]);
+            if(e.target.files&&e.target.files.length>0){
+              s("cmrFiles",[...form.cmrFiles,...Array.from(e.target.files)]);
               fileRef.current.value="";
             }
           }
@@ -558,12 +617,12 @@ function FormScreen({onOk}) {
         form.cmrFiles.length>0 && React.createElement("button",{
           className:"clr-btn",
           onClick:e=>{e.stopPropagation();s("cmrFiles",[]);if(fileRef.current)fileRef.current.value="";}
-        }, "✕ Remove all files")
+        },"✕ Remove all files")
       ),
 
       errs.submit && React.createElement("div",{className:"emsg",style:{marginBottom:14,textAlign:"center"}},"⚠ "+errs.submit),
-      React.createElement("button",{className:"sub-btn", onClick:handleSubmit, disabled:busy},
-        busy ? "⏳ Sending…" : "✓ Register Haulage")
+      React.createElement("button",{className:"sub-btn",onClick:handleSubmit,disabled:busy},
+        busy?"⏳ Sending…":"✓ Register Haulage")
     )
   );
 }
@@ -573,22 +632,22 @@ function FormScreen({onOk}) {
    ══════════════════════════════════════════════════════════ */
 function SuccessScreen({result, onNew}) {
   const p = result?.payload || {};
-  const cmrCount = (p.cmrItems || []).length;
+  const cmrCount = (p.cmrItems||[]).length;
   const rows = [
     ["Driver",    p.nombre],
     ["Tractor",   p.tractora],
     ["Trailer",   p.remolque],
     ["Client",    p.cliente],
     ["Route",     p.ruta],
-    ["Reference", p.referencia && p.referencia !== "-" ? p.referencia : null],
-    ["CMR",       cmrCount > 0 ? `${cmrCount} file${cmrCount>1?"s":""} attached` : "—"],
-  ].filter(([,v]) => v);
+    ["Reference", p.referencia && p.referencia!=="-" ? p.referencia : null],
+    ["CMR",       cmrCount>0 ? `${cmrCount} file${cmrCount>1?"s":""} attached` : "—"],
+  ].filter(([,v])=>v);
 
-  return React.createElement("div", {className:"app"},
-    React.createElement("div", {className:"hdr"},
+  return React.createElement("div",{className:"app"},
+    React.createElement("div",{className:"hdr"},
       React.createElement("div",{className:"logo"},"✓ ",React.createElement("b",null,"REGISTERED"))
     ),
-    React.createElement("div", {className:"suc-body"},
+    React.createElement("div",{className:"suc-body"},
       React.createElement("div",{className:"suc-ic"},"✅"),
       React.createElement("div",{className:"suc-ttl"},"HAULAGE REGISTERED!"),
       React.createElement("div",{className:"suc-sub"},
@@ -597,12 +656,12 @@ function SuccessScreen({result, onNew}) {
           : "Haulage sent successfully to Google Sheets."
       ),
       React.createElement("div",{className:"suc-data"},
-        rows.map(([k,v]) => React.createElement("div",{className:"suc-row",key:k},
+        rows.map(([k,v])=>React.createElement("div",{className:"suc-row",key:k},
           React.createElement("span",{className:"suc-k"},k),
           React.createElement("span",{className:"suc-v"},v)
         ))
       ),
-      React.createElement("button",{className:"new-btn", onClick:onNew},"+ New Haulage")
+      React.createElement("button",{className:"new-btn",onClick:onNew},"+ New Haulage")
     )
   );
 }
@@ -614,14 +673,14 @@ function App() {
   const [screen, setScreen] = React.useState("form");
   const [result, setResult] = React.useState(null);
 
-  if (screen === "success")
-    return React.createElement(SuccessScreen, {
+  if (screen==="success")
+    return React.createElement(SuccessScreen,{
       result,
-      onNew: () => { setResult(null); setScreen("form"); }
+      onNew:()=>{setResult(null);setScreen("form");}
     });
 
-  return React.createElement(FormScreen, {
-    onOk: r => { setResult(r); setScreen("success"); }
+  return React.createElement(FormScreen,{
+    onOk:r=>{setResult(r);setScreen("success");}
   });
 }
 
