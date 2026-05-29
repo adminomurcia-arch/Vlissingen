@@ -253,7 +253,7 @@ function Pick({label, sub, active, onClick}) {
    ══════════════════════════════════════════════════════════ */
 function FormScreen({onOk}) {
   const [form, setForm] = useState({
-    nombre:"", tractora:"", remolque:"",
+    tractora:"", remolque:"",
     cliente:"", ruta:"",
     refRaw:"", refRaw2:"",
     fechaCarga: fmtNow(), fechaDescarga:"",
@@ -287,7 +287,7 @@ function FormScreen({onOk}) {
     const e = {};
     const now = fmtNow();
 
-    if (!form.nombre.trim())   e.nombre   = "Required";
+
     if (!form.tractora.trim()) e.tractora = "Required";
     if (!form.remolque.trim()) e.remolque = "Required";
     if (!form.cliente)         e.cliente  = "Select the client";
@@ -352,8 +352,8 @@ function FormScreen({onOk}) {
 
       const payload = {
         fuente:        "Opstal",
-        codigo:        "",
-        nombre:        form.nombre.trim(),
+        codigo:        "OPSTAL",
+        nombre:        "OPSTAL",
         tractora:      form.tractora.trim(),
         remolque:      form.remolque.trim(),
         tipo:          "Haulage",
@@ -401,21 +401,6 @@ function FormScreen({onOk}) {
 
     React.createElement("div", {className:"body"},
 
-      /* ── Driver name ── */
-      React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Driver"),
-        React.createElement("div", {className:"fld"},
-          React.createElement("label", null, "Full name"),
-          React.createElement("input", {
-            value: form.nombre,
-            placeholder: "Enter driver name",
-            className: errs.nombre ? "er" : "",
-            autoCapitalize: "words",
-            onChange: e => s("nombre", e.target.value)
-          }),
-          errs.nombre && React.createElement("div",{className:"emsg"},"⚠ "+errs.nombre)
-        )
-      ),
 
       /* ── Vehicle ── */
       React.createElement("div", {className:"sec"},
@@ -634,7 +619,6 @@ function SuccessScreen({result, onNew}) {
   const p = result?.payload || {};
   const cmrCount = (p.cmrItems||[]).length;
   const rows = [
-    ["Driver",    p.nombre],
     ["Tractor",   p.tractora],
     ["Trailer",   p.remolque],
     ["Client",    p.cliente],
