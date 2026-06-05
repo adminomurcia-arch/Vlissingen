@@ -40,10 +40,9 @@
     .sec-ttl::before{content:'';display:block;width:3px;height:16px;background:var(--amber);border-radius:2px;flex-shrink:0}
     .fld{margin-bottom:14px}
     .fld label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}
-    .fld input,.fld select,.fld textarea{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
-    .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--amber)}
+    .fld input,.fld select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+    .fld input:focus,.fld select:focus{border-color:var(--amber)}
     .fld input.er,.fld select.er{border-color:var(--err)}
-    .fld textarea{resize:vertical;min-height:90px;line-height:1.5}
     .fld select option{background:#1c2230}
     .emsg{color:var(--err);font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -111,6 +110,14 @@
     .suc-row:last-child{border-bottom:none}
     .suc-k{color:var(--muted);flex-shrink:0}
     .suc-v{font-weight:600;text-align:right;word-break:break-all}
+
+    /* ── Autocomplete ── */
+    .ac-wrap{position:relative}
+    .ac-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card2);border:1.5px solid var(--amber);border-radius:10px;z-index:200;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+    .ac-item{padding:12px 14px;cursor:pointer;font-size:15px;font-family:var(--font-b);transition:background .12s}
+    .ac-item:hover,.ac-item.hi{background:rgba(240,165,0,.13);color:var(--amber2)}
+    .ac-item:not(:last-child){border-bottom:1px solid var(--border)}
+    .ac-empty{padding:12px 14px;font-size:13px;color:var(--muted);font-style:italic}
   </style>
 </head>
 <body>
@@ -167,20 +174,16 @@ const RUTAS = {
     "SUPERMARITIME → AMC",
     "WHITE&GREEN → AMC",
     "AMC → WHITE&GREEN",
-    "AMC → Lineage Vlissingen",
-    "AMC → Kloosterboer",
   ],
   "White&Green": [
     "WHITE&GREEN → SUPERMARITIME",
     "SUPERMARITIME → WHITE&GREEN",
-    "WHITE&GREEN → AMC",
   ],
 };
 
 /* Available destinations for SHORT type */
 const DESTINOS_CORTO = [
-  {id:"NAGEL",       label:"Nagel Bochum",              origen:false, destino:false},
-  {id:"AH_ZW",       label:"AH Zwolle",                 origen:false, destino:false},
+  {id:"AH_ZW",  label:"AH Zwolle",            origen:false, destino:false},
   {id:"AH_TI",  label:"AH Tilburg",            origen:false, destino:false},
   {id:"AH_LI",  label:"AH Limburg",            origen:false, destino:false},
   {id:"AH_DE",  label:"AH Delfgauw",           origen:false, destino:false},
@@ -251,6 +254,83 @@ function useLists() {
   return {lists, status, fromSheet};
 }
 
+/* ── Autocomplete input con validación contra lista ── */
+function AutocompleteInput({value, onChange, options, placeholder, hasError}) {
+  const [query,   setQuery]   = React.useState(value || "");
+  const [open,    setOpen]    = React.useState(false);
+  const [hiIdx,   setHiIdx]   = React.useState(-1);
+  const wrapRef = React.useRef(null);
+
+  /* Sincroniza query si el valor externo se resetea (nuevo porte) */
+  React.useEffect(() => { setQuery(value || ""); }, [value]);
+
+  const filtered = query.trim() === ""
+    ? options
+    : options.filter(o => o.toLowerCase().includes(query.trim().toLowerCase()));
+
+  const pick = (val) => {
+    setQuery(val);
+    onChange(val);
+    setOpen(false);
+    setHiIdx(-1);
+  };
+
+  const handleBlur = (e) => {
+    /* Si el click fue dentro del wrapper no cerramos todavía */
+    if (wrapRef.current && wrapRef.current.contains(e.relatedTarget)) return;
+    setOpen(false);
+    /* Validación: si lo escrito no está en la lista, limpiar valor válido */
+    if (!options.includes(query.trim())) {
+      onChange("");          /* marca como inválido en el form */
+    } else {
+      onChange(query.trim());
+    }
+  };
+
+  const handleKey = (e) => {
+    if (!open) { if (e.key === "ArrowDown" || e.key === "Enter") setOpen(true); return; }
+    if (e.key === "ArrowDown")  { e.preventDefault(); setHiIdx(i => Math.min(i+1, filtered.length-1)); }
+    else if (e.key === "ArrowUp")   { e.preventDefault(); setHiIdx(i => Math.max(i-1, 0)); }
+    else if (e.key === "Enter")     { e.preventDefault(); if (hiIdx >= 0 && filtered[hiIdx]) pick(filtered[hiIdx]); }
+    else if (e.key === "Escape")    { setOpen(false); setHiIdx(-1); }
+  };
+
+  const isValid = options.includes(query.trim());
+
+  return React.createElement("div", {className:"ac-wrap", ref:wrapRef},
+    React.createElement("input", {
+      value: query,
+      placeholder: placeholder || "Escribe para buscar…",
+      className: hasError ? "er" : (!isValid && query.trim() !== "" ? "er" : ""),
+      autoComplete: "off",
+      onFocus: () => { setOpen(true); setHiIdx(-1); },
+      onBlur:  handleBlur,
+      onKeyDown: handleKey,
+      onChange: e => {
+        const v = e.target.value.toUpperCase();
+        setQuery(v);
+        setOpen(true);
+        setHiIdx(-1);
+        /* No confirmamos valor hasta que coincida exacto o se pierda foco */
+        if (options.includes(v.trim())) onChange(v.trim());
+        else onChange("");
+      }
+    }),
+    open && React.createElement("div", {className:"ac-drop"},
+      filtered.length === 0
+        ? React.createElement("div", {className:"ac-empty"}, "Sin coincidencias")
+        : filtered.map((opt, i) =>
+            React.createElement("div", {
+              key: opt,
+              className: "ac-item" + (i === hiIdx ? " hi" : ""),
+              /* mouseDown antes de blur para que pick() se ejecute */
+              onMouseDown: e => { e.preventDefault(); pick(opt); }
+            }, opt)
+          )
+    )
+  );
+}
+
 /* ── Pick button ── */
 function Pick({label, sub, active, onClick}) {
   return React.createElement("div",
@@ -298,32 +378,36 @@ function ConductorBlock({codigo, nombre, onChange}) {
 function FormScreen({lists, listsStatus, fromSheet, onOk}) {
   const {conductores, tractoras, remolques} = lists;
 
+  const savedTractora = localStorage.getItem("pv_tractora") || "";
   const [form, setForm] = useState({
-    codigo:"", nombre:"", tractora:"", remolque:"",
+    codigo:"", nombre:"", tractora: tractoras.includes(savedTractora) ? savedTractora : "", remolque:"",
     tipo:"",                          // "Acarreo" | "Corto"
     cliente:"", ruta:"",
     destCorto:"",                     // id del destino CORTO seleccionado
     origen:"", destino:"",            // campos libres para Bidones/Otros
     fechaCarga: fmtNow(), fechaDescarga:"",
-    refRaw:"", refRaw2:"", comentarios:"", cmrFiles:[]
+    refRaw:"", cmrFile:null
   });
   const [errs,     setErrs]     = useState({});
   const [refFocus, setRefFocus] = useState(false);
   const [busy,     setBusy]     = useState(false);
   const fileRef    = useRef(null);
   const submitting = useRef(false); // guardia síncrona anti-doble-envío
-  const s = (k,v) => setForm(f => ({...f, [k]:v}));
+  const s = (k,v) => {
+    if (k === "tractora" && v) localStorage.setItem("pv_tractora", v);
+    setForm(f => ({...f, [k]:v}));
+  };
 
   const onCodigo  = v => {
     const found = conductores.find(c => c.codigo === v.trim().toUpperCase());
     setForm(f => ({...f, codigo:v.toUpperCase(), nombre: found ? found.nombre : ""}));
   };
   /* Type change → reset everything that depends on it */
-  const onTipo    = v => setForm(f => ({...f, tipo:v, cliente:"", ruta:"", destCorto:"", origen:"", destino:"", refRaw:"", refRaw2:""}));
+  const onTipo    = v => setForm(f => ({...f, tipo:v, cliente:"", ruta:"", destCorto:"", origen:"", destino:"", refRaw:""}));
   /* Client change → reset route and reference */
-  const onCliente = v => setForm(f => ({...f, cliente:v, ruta:"", refRaw:"", refRaw2:""}));
+  const onCliente = v => setForm(f => ({...f, cliente:v, ruta:"", refRaw:""}));
   /* Route change → reset reference */
-  const onRuta    = v => setForm(f => ({...f, ruta:v, refRaw:"", refRaw2:""}));
+  const onRuta    = v => setForm(f => ({...f, ruta:v, refRaw:""}));
   /* Cambio de destino CORTO → limpiar origen/destino libres */
   const onDestCorto = v => setForm(f => ({
     ...f,
@@ -339,15 +423,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
   const rutasDisponibles = RUTAS[form.cliente] || [];
   const prefijo          = getPrefijo(form.tipo, form.cliente);
-  const isRutaDobleRef  = form.tipo === "Acarreo" && form.cliente === "White&Green" && form.ruta === "WHITE&GREEN → AMC";
-  const getReference    = () => {
-    if (isRutaDobleRef) {
-      const r1 = form.refRaw  ? "315712" + form.refRaw  : "";
-      const r2 = form.refRaw2 ? "PLZ"    + form.refRaw2 : "";
-      return (r1 && r2) ? r1 + " - " + r2 : r1 || r2;
-    }
-    return form.refRaw ? (prefijo ? prefijo + form.refRaw : form.refRaw) : "";
-  };
+  const getReference    = () => form.refRaw ? (prefijo ? prefijo + form.refRaw : form.refRaw) : "";
 
   /* ── Validación ── */
   const validate = () => {
@@ -355,8 +431,8 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     const now = fmtNow();
 
     if (!form.nombre)   e.codigo   = "Código de conductor no válido";
-    if (!form.tractora) e.tractora = "Obligatorio";
-    if (!form.remolque) e.remolque = "Required";
+    if (!form.tractora || !tractoras.includes(form.tractora)) e.tractora = "Selecciona una tractora válida";
+    if (!form.remolque || !remolques.includes(form.remolque)) e.remolque = "Selecciona un remolque válido";
     if (!form.tipo)     e.tipo     = "Selecciona el tipo de porte";
 
     if (form.tipo === "Acarreo") {
@@ -385,55 +461,29 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     }
 
     /* CMR required */
-    if (!form.cmrFiles || form.cmrFiles.length === 0) e.cmr = "Adjunta el CMR (foto o documento)";
+    if (!form.cmrFile) e.cmr = "Adjunta el CMR (foto o documento)";
 
     /* Reference */
     if (form.tipo === "Acarreo" && form.ruta) {
       if (form.cliente === "AMC") {
-        const rutaLibre = form.ruta === "AMC → Lineage Vlissingen" || form.ruta === "AMC → Kloosterboer";
-        if (rutaLibre) {
-          if (!form.refRaw || form.refRaw.length < 10)
-            e.ref = "Mínimo 10 caracteres";
-          else if (form.refRaw.length > 30)
-            e.ref = "Máximo 30 caracteres";
-        } else {
-          if (!form.refRaw || form.refRaw.length !== 7)
-            e.ref = "Exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
-          else if (!/^\d{7}$/.test(form.refRaw))
-            e.ref = "Solo dígitos";
-        }
-      } else if (form.cliente === "White&Green") {
-        if (isRutaDobleRef) {
-          if (!form.refRaw || form.refRaw.length !== 4)
-            e.ref = "Ref. WG: exactamente 4 dígitos tras el prefijo 315712";
-          else if (!/^\d{4}$/.test(form.refRaw))
-            e.ref = "Ref. WG: solo dígitos";
-          if (!form.refRaw2 || form.refRaw2.length !== 7)
-            e.ref2 = "Ref. AMC: exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
-          else if (!/^\d{7}$/.test(form.refRaw2))
-            e.ref2 = "Ref. AMC: solo dígitos";
-        } else {
-          if (!form.refRaw || form.refRaw.length < 10)
-            e.ref = "Mínimo 10 caracteres";
-          else if (form.refRaw.length > 50)
-            e.ref = "Máximo 50 caracteres";
-        }
-      }
-    }
-    // Short: reference required only if destination is NOT Bidones or Otros
-    if (form.tipo === "Corto" && form.destCorto &&
-        form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") {
-      if (destCortoObj?.refLibre) {
-        if (!form.refRaw || form.refRaw.length < 10)
-          e.ref = "Mínimo 10 caracteres";
-        else if (form.refRaw.length > 30)
-          e.ref = "Máximo 30 caracteres";
-      } else {
         if (!form.refRaw || form.refRaw.length !== 7)
-          e.ref = "Exactamente 7 dígitos (prefijo OCZ añadido automáticamente)";
+          e.ref = "Exactamente 7 dígitos (prefijo PLZ añadido automáticamente)";
         else if (!/^\d{7}$/.test(form.refRaw))
           e.ref = "Solo dígitos";
+      } else if (form.cliente === "White&Green") {
+        if (!form.refRaw || form.refRaw.length < 10)
+          e.ref = "Mínimo 10 caracteres";
+        else if (form.refRaw.length > 50)
+          e.ref = "Máximo 50 caracteres";
       }
+    }
+    // Short: reference required only if destination is NOT Barrels or Others
+    if (form.tipo === "Corto" && form.destCorto &&
+        form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") {
+      if (!form.refRaw || form.refRaw.length !== 7)
+        e.ref = "Exactamente 7 dígitos (prefijo OCZ añadido automáticamente)";
+      else if (!/^\d{7}$/.test(form.refRaw))
+        e.ref = "Solo dígitos";
     }
 
     return e;
@@ -448,14 +498,12 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     submitting.current = true;
     setBusy(true);
     try {
-      /* Convertir todos los archivos CMR a base64 */
-      const cmrFiles = form.cmrFiles || [];
-      const cmrItems = await Promise.all(cmrFiles.map(async (file, i) => ({
-        cmrBase64: await f2b64(file),
-        cmrType:   file.type,
-        cmrName:   file.name,
-        index:     i
-      })));
+      let cmrBase64="", cmrType="", cmrName="";
+      if (form.cmrFile) {
+        cmrBase64 = await f2b64(form.cmrFile);
+        cmrType   = form.cmrFile.type;
+        cmrName   = form.cmrFile.name;
+      }
       /* Build destination and route by type */
       const esCorto   = form.tipo === "Corto";
       const dObj      = DESTINOS_CORTO.find(d => d.id === form.destCorto);
@@ -475,8 +523,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         fechaCarga:    form.fechaCarga.replace("T"," "),
         fechaDescarga: form.fechaDescarga.replace("T"," "),
         referencia:    getReference(),
-        comentarios:   form.comentarios || "",
-        cmrItems
+        cmrBase64, cmrType, cmrName
       };
 
       /* Send completely in background — does not block or show errors to driver */
@@ -535,18 +582,24 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         React.createElement("div", {className:"row2"},
           React.createElement("div", {className:"fld"},
             React.createElement("label",null,"Tractora"),
-            React.createElement("select", {value:form.tractora, onChange:e=>s("tractora",e.target.value), className:errs.tractora?"er":""},
-              React.createElement("option",{value:""},"-- Selecciona --"),
-              tractoras.map(t => React.createElement("option",{key:t,value:t},t))
-            ),
+            React.createElement(AutocompleteInput, {
+              value:    form.tractora,
+              options:  tractoras,
+              placeholder: "Matrícula tractora…",
+              hasError: !!errs.tractora,
+              onChange: v => s("tractora", v)
+            }),
             errs.tractora && React.createElement("div",{className:"emsg"},"⚠ "+errs.tractora)
           ),
           React.createElement("div", {className:"fld"},
             React.createElement("label",null,"Remolque"),
-            React.createElement("select", {value:form.remolque, onChange:e=>s("remolque",e.target.value), className:errs.remolque?"er":""},
-              React.createElement("option",{value:""},"-- Select --"),
-              remolques.map(r => React.createElement("option",{key:r,value:r},r))
-            ),
+            React.createElement(AutocompleteInput, {
+              value:    form.remolque,
+              options:  remolques,
+              placeholder: "Matrícula remolque…",
+              hasError: !!errs.remolque,
+              onChange: v => s("remolque", v)
+            }),
             errs.remolque && React.createElement("div",{className:"emsg"},"⚠ "+errs.remolque)
           )
         )
@@ -660,68 +713,25 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
       /* ── REFERENCIA ── */
       (form.tipo === "Acarreo" && form.ruta ||
        form.tipo === "Corto" && form.destCorto &&
-         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS" ||
-       isRutaDobleRef) &&
+         form.destCorto !== "BIDONES" && form.destCorto !== "OTROS") &&
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Referencia"),
         React.createElement("div", {className:"fld"},
-          /* WHITE&GREEN → AMC: dos referencias */
-          isRutaDobleRef
-            ? React.createElement(React.Fragment, null,
-                React.createElement("div", {className:"fld"},
-                  React.createElement("label", null, "Ref. WG"),
-                  React.createElement("div", {className:`ref-wrap${errs.ref?" er":""}`},
-                    React.createElement("div", {className:"ref-pfx"}, "315712"),
-                    React.createElement("input", {
-                      value: form.refRaw,
-                      inputMode: "numeric",
-                      placeholder: "0000",
-                      maxLength: 4,
-                      onChange: e => s("refRaw", e.target.value.replace(/\D/g,"").slice(0,4)),
-                    })
-                  ),
-                  errs.ref
-                    ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref)
-                    : form.refRaw.length === 4
-                      ? React.createElement("div",{className:"ref-hint"}, "Referencia: 315712"+form.refRaw)
-                      : null
-                ),
-                React.createElement("div", {className:"fld"},
-                  React.createElement("label", null, "Ref. AMC"),
-                  React.createElement("div", {className:`ref-wrap${errs.ref2?" er":""}`},
-                    React.createElement("div", {className:"ref-pfx"}, "PLZ"),
-                    React.createElement("input", {
-                      value: form.refRaw2,
-                      inputMode: "numeric",
-                      placeholder: "0000000",
-                      maxLength: 7,
-                      onChange: e => s("refRaw2", e.target.value.replace(/\D/g,"").slice(0,7)),
-                    })
-                  ),
-                  errs.ref2
-                    ? React.createElement("div",{className:"emsg"},"⚠ "+errs.ref2)
-                    : form.refRaw2.length === 7
-                      ? React.createElement("div",{className:"ref-hint"}, "Referencia: PLZ"+form.refRaw2)
-                      : null
-                )
-              )
-            /* White&Green otras rutas, AMC rutas libres o Corto refLibre: campo libre alfanumérico sin prefijo */
-            : (form.tipo === "Acarreo" && form.cliente === "White&Green") ||
-          (form.tipo === "Acarreo" && form.cliente === "AMC" && (form.ruta === "AMC → Lineage Vlissingen" || form.ruta === "AMC → Kloosterboer")) ||
-          destCortoObj?.refLibre
+          /* White&Green Acarreo: campo libre alfanumérico sin prefijo */
+          form.tipo === "Acarreo" && form.cliente === "White&Green"
             ? React.createElement(React.Fragment, null,
                 React.createElement("input",{
                   value: form.refRaw,
-                  placeholder: form.cliente === "White&Green" ? "Mín. 10 · Máx. 50 caracteres" : "Mín. 10 · Máx. 30 caracteres",
-                  maxLength: form.cliente === "White&Green" ? 50 : 30,
+                  placeholder: "Mín. 10 · Máx. 50 caracteres",
+                  maxLength: 50,
                   className: errs.ref?"er":"",
-                  onChange: e => s("refRaw", e.target.value.slice(0, form.cliente === "White&Green" ? 50 : 30)),
+                  onChange: e => s("refRaw", e.target.value.slice(0,50)),
                   onFocus: ()=>setRefFocus(true),
                   onBlur:  ()=>setRefFocus(false)
                 }),
-                React.createElement("div",{className:"char-c"}, form.refRaw.length+"/"+(form.cliente === "White&Green" ? 50 : 30))
+                React.createElement("div",{className:"char-c"}, form.refRaw.length+"/50")
               )
-            /* AMC Acarreo y Cortos con OCZ: prefijo fijo + 7 dígitos */
+            /* AMC Acarreo y cualquier Corto: prefijo fijo + 7 dígitos */
             : React.createElement("div", {className:`ref-wrap${refFocus?" foc":""}${errs.ref?" er":""}`},
                 React.createElement("div", {className:"ref-pfx"}, prefijo),
                 React.createElement("input",{
@@ -742,47 +752,23 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         )
       ),
 
-      /* ── COMENTARIOS ── */
-      React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Comentarios / Observaciones"),
-        React.createElement("div", {className:"fld"},
-          React.createElement("textarea", {
-            value: form.comentarios,
-            placeholder: "Escriba cualquier comentario/información que quiera transmitir",
-            maxLength: 500,
-            onChange: e => s("comentarios", e.target.value)
-          }),
-          React.createElement("div", {className:"char-c"}, form.comentarios.length+"/500")
-        )
-      ),
-
       /* ── CMR (obligatorio) ── */
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "CMR"),
-        React.createElement("div", {className:`cmr${form.cmrFiles.length>0?" on":""}${errs.cmr?" er":""}`, onClick:()=>fileRef.current.click()},
-          React.createElement("div",{className:"cmr-ic"}, form.cmrFiles.length>0 ? "📄" : "📷"),
+        React.createElement("div", {className:`cmr${form.cmrFile?" on":""}${errs.cmr?" er":""}`, onClick:()=>fileRef.current.click()},
+          React.createElement("div",{className:"cmr-ic"}, form.cmrFile ? "📄" : "📷"),
           React.createElement("div",{className:"cmr-tx"},
-            form.cmrFiles.length>0
-              ? `${form.cmrFiles.length} archivo${form.cmrFiles.length>1?"s":""} adjunto${form.cmrFiles.length>1?"s":""} — toca para añadir más`
-              : "Toca para seleccionar imagen, PDF o hacer una foto"
+            form.cmrFile ? "Archivo adjunto:" : "Toca para seleccionar imagen, PDF o hacer una foto"
           ),
-          form.cmrFiles.length>0 && React.createElement("div",{className:"cmr-nm"},
-            form.cmrFiles.map((f,i) => React.createElement("div",{key:i},"✓ "+f.name))
-          )
+          form.cmrFile && React.createElement("div",{className:"cmr-nm"},"✓ "+form.cmrFile.name)
         ),
         React.createElement("input",{ref:fileRef, type:"file", style:{display:"none"},
-          accept:"image/*,application/pdf", multiple:true,
-          onChange:e=>{
-            if(e.target.files && e.target.files.length>0) {
-              const nuevos = Array.from(e.target.files);
-              s("cmrFiles", [...form.cmrFiles, ...nuevos]);
-              fileRef.current.value="";
-            }
-          }}),
+          accept:"image/*,application/pdf", capture:"environment",
+          onChange:e=>{if(e.target.files[0]) s("cmrFile",e.target.files[0]);}}),
         errs.cmr && React.createElement("div",{className:"emsg",style:{marginTop:8,justifyContent:"center"}},"⚠ "+errs.cmr),
-        form.cmrFiles.length>0 && React.createElement("button",{className:"clr-btn",
-          onClick:e=>{e.stopPropagation();s("cmrFiles",[]);if(fileRef.current)fileRef.current.value="";}},
-          "✕ Quitar todos los archivos")
+        form.cmrFile && React.createElement("button",{className:"clr-btn",
+          onClick:e=>{e.stopPropagation();s("cmrFile",null);if(fileRef.current)fileRef.current.value="";}},
+          "✕ Quitar archivo")
       ),
 
       errs.submit && React.createElement("div",{className:"emsg",style:{marginBottom:14,textAlign:"center"}},"⚠ "+errs.submit),
