@@ -119,45 +119,6 @@
     .ac-item:hover,.ac-item.hi{background:rgba(240,165,0,.13);color:var(--amber2)}
     .ac-item:not(:last-child){border-bottom:1px solid var(--border)}
     .ac-empty{padding:12px 14px;font-size:13px;color:var(--muted);font-style:italic}
-
-    /* ── Botón header mis registros ── */
-    .hdr-btn{background:rgba(240,165,0,.12);border:1px solid rgba(240,165,0,.35);color:var(--amber);font-family:var(--font-h);font-weight:700;font-size:13px;letter-spacing:1px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .18s}
-    .hdr-btn:hover{background:rgba(240,165,0,.22)}
-
-    /* ── Login screen ── */
-    .login-body{padding:40px 22px;max-width:380px;margin:0 auto}
-    .login-ic{font-size:48px;text-align:center;margin-bottom:16px}
-    .login-ttl{font-family:var(--font-h);font-weight:800;font-size:26px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:6px}
-    .login-sub{color:var(--muted);font-size:13px;text-align:center;margin-bottom:32px;line-height:1.5}
-    .pin-wrap{display:flex;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s}
-    .pin-wrap.foc{border-color:var(--amber)}
-    .pin-wrap.er{border-color:var(--err)}
-    .pin-pfx{padding:12px 13px;background:rgba(240,165,0,.12);color:var(--amber2);font-family:var(--font-h);font-weight:700;font-size:14px;border-right:1px solid var(--border);white-space:nowrap;display:flex;align-items:center}
-    .pin-wrap input{border:none;border-radius:0;background:transparent;flex:1;min-width:0;padding:12px 14px;color:var(--text);font-family:var(--font-h);font-size:22px;letter-spacing:6px;outline:none}
-    .login-err{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);color:var(--err);border-radius:8px;padding:10px 14px;font-size:13px;text-align:center;margin-top:14px}
-
-    /* ── Mis registros screen ── */
-    .mreg-body{padding:18px;max-width:700px;margin:0 auto;padding-bottom:60px}
-    .mreg-welcome{background:var(--card);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;border:1px solid var(--border)}
-    .mreg-avatar{width:40px;height:40px;border-radius:50%;background:rgba(240,165,0,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-    .mreg-nombre{font-weight:600;font-size:15px}
-    .mreg-sub{font-size:12px;color:var(--muted);margin-top:2px}
-    .mreg-logout{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:var(--font-b)}
-    .mreg-logout:hover{border-color:var(--err);color:var(--err)}
-    .mreg-filtros{background:var(--card);border-radius:12px;padding:14px 18px;margin-bottom:20px;border:1px solid var(--border)}
-    .mreg-filtros-ttl{font-family:var(--font-h);font-weight:700;font-size:11px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:12px}
-    .mreg-count{font-size:12px;color:var(--muted);margin-top:10px}
-    .mreg-count b{color:var(--text)}
-    .mreg-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
-    .mreg-table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
-    .mreg-table thead tr{background:var(--amber)}
-    .mreg-table thead th{padding:10px 12px;text-align:left;color:#000;font-family:var(--font-h);font-weight:700;font-size:12px;letter-spacing:.5px;white-space:nowrap}
-    .mreg-table tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
-    .mreg-table tbody tr:hover{background:rgba(255,255,255,.03)}
-    .mreg-table tbody tr:last-child{border-bottom:none}
-    .mreg-table td{padding:9px 12px;color:var(--text);vertical-align:middle}
-    .mreg-table td.ref{font-family:var(--font-h);font-weight:700;color:var(--amber2);letter-spacing:.5px}
-    .mreg-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
   </style>
 </head>
 <body>
@@ -411,7 +372,7 @@ function ConductorBlock({codigo, nombre, onChange}) {
 /* ══════════════════════════════════════════════════════════
    PANTALLA: Formulario
    ══════════════════════════════════════════════════════════ */
-function FormScreen({lists, listsStatus, fromSheet, onOk, onMisRegistros}) {
+function FormScreen({lists, listsStatus, fromSheet, onOk}) {
   const {conductores, tractoras, remolques} = lists;
 
   const [form, setForm] = useState({
@@ -598,10 +559,19 @@ function FormScreen({lists, listsStatus, fromSheet, onOk, onMisRegistros}) {
         cmrItems
       };
 
-      /* Send completely in background — does not block or show errors to driver */
+      /* FIX: se espera la respuesta real del servidor antes de mostrar éxito.
+         Se quita mode:"no-cors" para poder LEER el status de la respuesta
+         (con no-cors la respuesta es opaca y no hay forma de saber si el
+         servidor realmente proceso el registro). No se fija Content-Type
+         explicito para evitar el preflight CORS que Apps Script no
+         responde — el body sigue siendo JSON en texto plano, doPost lo
+         parsea igual con JSON.parse(e.postData.contents). */
       if (!isDemo()) {
-        fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(payload), mode:"no-cors"})
-          .catch(() => {});
+        const res  = await fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(payload)});
+        const data = await res.json();
+        if (data.status !== "ok") {
+          throw new Error(data.msg || "El servidor no pudo procesar el registro.");
+        }
       }
 
       onOk({payload, demo: isDemo()});
@@ -627,11 +597,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk, onMisRegistros}) {
                : listsStatus==="loading" ? "Actualizando listas..."
                : listsStatus==="error"   ? "Sin conexión — usando datos locales"
                : ""
-        }),
-        React.createElement("button", {
-          className:"hdr-btn",
-          onClick: onMisRegistros
-        }, "📋 Mis Registros")
+        })
       )
     ),
 
@@ -962,288 +928,11 @@ function SuccessScreen({result, onNew}) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   PANTALLA: Login Mis Registros
-   ══════════════════════════════════════════════════════════ */
-function LoginScreen({onOk, onVolver}) {
-  const [codigo,   setCodigo]   = useState("");
-  const [pin,      setPin]      = useState("");
-  const [pinFocus, setPinFocus] = useState(false);
-  const [busy,     setBusy]     = useState(false);
-  const [err,      setErr]      = useState("");
-
-  const handleLogin = async () => {
-    if (busy) return;
-    if (!codigo.trim() || pin.length !== 4) {
-      setErr("Introduce tu código y un PIN de 4 dígitos.");
-      return;
-    }
-    setBusy(true);
-    setErr("");
-    try {
-      const res  = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body:   JSON.stringify({ action:"login", codigo: codigo.trim().toUpperCase(), pin }),
-        mode:   "cors"
-      });
-      const json = await res.json();
-      if (json.status === "ok") {
-        onOk({ nombre: json.nombre, isAdmin: json.isAdmin, registros: json.registros });
-      } else {
-        setErr(json.msg || "Código o PIN incorrecto.");
-      }
-    } catch(e) {
-      setErr("Error de conexión. Inténtalo de nuevo.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return React.createElement("div", {className:"app"},
-    React.createElement("div", {className:"hdr"},
-      React.createElement("div", {className:"logo"}, "PORTES ", React.createElement("b",null,"VLISSINGEN")),
-      React.createElement("div", {className:"hdr-right"},
-        React.createElement("button", {className:"hdr-btn", onClick: onVolver}, "← Volver")
-      )
-    ),
-    React.createElement("div", {className:"login-body"},
-      React.createElement("div", {className:"login-ic"}, "🔐"),
-      React.createElement("div", {className:"login-ttl"}, "MIS REGISTROS"),
-      React.createElement("div", {className:"login-sub"}, "Introduce tu código de conductor y tu PIN personal para acceder a tu historial."),
-      React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"fld"},
-          React.createElement("label", null, "Código de conductor"),
-          React.createElement("input", {
-            value: codigo, maxLength:10, placeholder:"C001",
-            autoCapitalize:"characters", spellCheck:false,
-            style:{fontFamily:"var(--font-h)",fontSize:"20px",letterSpacing:"3px",textTransform:"uppercase"},
-            onChange: e => { setCodigo(e.target.value.toUpperCase()); setErr(""); }
-          })
-        ),
-        React.createElement("div", {className:"fld"},
-          React.createElement("label", null, "PIN personal"),
-          React.createElement("div", {className:`pin-wrap${pinFocus?" foc":""}${err?" er":""}`},
-            React.createElement("div", {className:"pin-pfx"}, "PIN"),
-            React.createElement("input", {
-              type:"password", inputMode:"numeric", maxLength:4,
-              placeholder:"••••", value:pin,
-              onChange: e => { setPin(e.target.value.replace(/\D/g,"").slice(0,4)); setErr(""); },
-              onFocus: ()=>setPinFocus(true),
-              onBlur:  ()=>setPinFocus(false)
-            })
-          )
-        ),
-        err && React.createElement("div", {className:"login-err"}, "⚠ "+err),
-        React.createElement("button", {
-          className:"sub-btn", style:{marginTop:8},
-          onClick: handleLogin, disabled: busy
-        }, busy ? "⏳ Verificando..." : "→ Acceder")
-      )
-    )
-  );
-}
-
-/* ══════════════════════════════════════════════════════════
-   PANTALLA: Mis Registros
-   ══════════════════════════════════════════════════════════ */
-function MisRegistrosScreen({nombre, isAdmin, registros, onVolver}) {
-  const [desde,       setDesde]       = useState("");
-  const [hasta,       setHasta]       = useState("");
-  const [condFiltro,  setCondFiltro]  = useState("");
-  const [tractFiltro, setTractFiltro] = useState("");
-  const [remFiltro,   setRemFiltro]   = useState("");
-  const [tipoFiltro,  setTipoFiltro]  = useState("");
-  const [rutaFiltro,  setRutaFiltro]  = useState("");
-  const [refFiltro,   setRefFiltro]   = useState("");
-
-  // Listas únicas para autocomplete (solo admin)
-  const uniq = campo => [...new Set(registros.map(r => r[campo]||"").filter(Boolean))].sort();
-  const conductores = isAdmin ? uniq("conductor") : [];
-  const tractoras   = isAdmin ? uniq("tractora")  : [];
-  const remolques   = isAdmin ? uniq("remolque")  : [];
-
-  const limpiar = () => { setDesde(""); setHasta(""); setCondFiltro(""); setTractFiltro(""); setRemFiltro(""); setTipoFiltro(""); setRutaFiltro(""); setRefFiltro(""); };
-
-  const hayFiltro = desde || hasta || condFiltro || tractFiltro || remFiltro || tipoFiltro || rutaFiltro || refFiltro;
-
-  const filtrados = registros.filter(r => {
-    // Filtro fecha — basado en fcarga
-    if (desde || hasta) {
-      const raw = (r.fcarga||"").trim().split(" ")[0];
-      const [dd,mm,yyyy] = raw.split("/");
-      const iso = (yyyy&&mm&&dd) ? yyyy+"-"+mm+"-"+dd : "";
-      if (iso) {
-        if (desde && iso < desde) return false;
-        if (hasta && iso > hasta) return false;
-      }
-    }
-    // Filtros admin
-    if (isAdmin) {
-      if (condFiltro  && !(r.conductor||"").toLowerCase().includes(condFiltro.toLowerCase()))  return false;
-      if (tractFiltro && !(r.tractora ||"").toLowerCase().includes(tractFiltro.toLowerCase())) return false;
-      if (remFiltro   && !(r.remolque ||"").toLowerCase().includes(remFiltro.toLowerCase()))   return false;
-      if (tipoFiltro  && (r.tipo||"") !== tipoFiltro)                                          return false;
-      if (rutaFiltro  && !(r.ruta    ||"").toLowerCase().includes(rutaFiltro.toLowerCase()))   return false;
-      if (refFiltro   && !(r.ref     ||"").toLowerCase().includes(refFiltro.toLowerCase()))    return false;
-    }
-    return true;
-  });
-
-  const tipoTag = tipo => {
-    if (!tipo) return "-";
-    const col = tipo === "Acarreo" ? "var(--info)" : "var(--ok)";
-    return React.createElement("span", {
-      style:{background:"rgba(88,166,255,.1)",color:col,border:"1px solid currentColor",
-             borderRadius:"5px",padding:"2px 7px",fontSize:"11px",fontFamily:"var(--font-h)",
-             fontWeight:700,letterSpacing:".5px"}
-    }, tipo);
-  };
-
-  const splitFecha = val => {
-    const parts = (val||"").trim().split(" ");
-    const fecha = parts[0] || "-";
-    const hora  = parts[1] || "";
-    return React.createElement("div", null,
-      React.createElement("div", null, fecha),
-      hora && React.createElement("div", {style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}}, hora)
-    );
-  };
-
-  const acInput = (label, value, setValue, lista) =>
-    React.createElement("div", {className:"fld", style:{marginBottom:0}},
-      React.createElement("label", null, label),
-      React.createElement("div", {className:"ac-wrap"},
-        React.createElement("input", {
-          value, placeholder: "Todos",
-          onChange: e => setValue(e.target.value)
-        }),
-        value && lista.filter(v => v.toLowerCase().includes(value.toLowerCase()) && v.toLowerCase() !== value.toLowerCase()).length > 0 &&
-          React.createElement("div", {className:"ac-drop"},
-            lista
-              .filter(v => v.toLowerCase().includes(value.toLowerCase()))
-              .map((v,i) => React.createElement("div", {
-                key:i, className:"ac-item",
-                onMouseDown: e => { e.preventDefault(); setValue(v); }
-              }, v))
-          )
-      )
-    );
-
-  return React.createElement("div", {className:"app"},
-    React.createElement("div", {className:"hdr"},
-      React.createElement("div", {className:"logo"}, "📋 ", React.createElement("b",null, isAdmin ? "TODOS LOS REGISTROS" : "MIS REGISTROS")),
-      React.createElement("div", {className:"hdr-right"},
-        React.createElement("button", {className:"hdr-btn", onClick:onVolver}, "← Volver")
-      )
-    ),
-    React.createElement("div", {className:"mreg-body"},
-
-      React.createElement("div", {className:"mreg-welcome"},
-        React.createElement("div", {className:"mreg-avatar"}, isAdmin ? "🔑" : "👤"),
-        React.createElement("div", null,
-          React.createElement("div", {className:"mreg-nombre"}, nombre),
-          React.createElement("div", {className:"mreg-sub"}, registros.length + " registro" + (registros.length !== 1 ? "s" : "") + " en total")
-        ),
-        React.createElement("button", {className:"mreg-logout", onClick:onVolver}, "Cerrar sesión")
-      ),
-
-      React.createElement("div", {className:"mreg-filtros"},
-        React.createElement("div", {className:"mreg-filtros-ttl"}, "Filtrar"),
-
-        // Fechas — siempre visibles
-        React.createElement("div", {className:"row2", style:{marginBottom: isAdmin ? 10 : 0}},
-          React.createElement("div", {className:"fld",style:{marginBottom:0}},
-            React.createElement("label", null, "Desde"),
-            React.createElement("input", {type:"date", value:desde, onChange: e=>setDesde(e.target.value), style:{colorScheme:"dark"}})
-          ),
-          React.createElement("div", {className:"fld",style:{marginBottom:0}},
-            React.createElement("label", null, "Hasta"),
-            React.createElement("input", {type:"date", value:hasta, onChange: e=>setHasta(e.target.value), style:{colorScheme:"dark"}})
-          )
-        ),
-
-        // Filtros admin
-        isAdmin && React.createElement(React.Fragment, null,
-          React.createElement("div", {className:"row2", style:{marginBottom:10}},
-            acInput("Conductor", condFiltro,  setCondFiltro,  conductores),
-            acInput("Tractora",  tractFiltro, setTractFiltro, tractoras)
-          ),
-          React.createElement("div", {className:"row2", style:{marginBottom:10}},
-            acInput("Remolque",  remFiltro,   setRemFiltro,   remolques),
-            React.createElement("div", {className:"fld", style:{marginBottom:0}},
-              React.createElement("label", null, "Tipo"),
-              React.createElement("select", {value:tipoFiltro, onChange:e=>setTipoFiltro(e.target.value)},
-                React.createElement("option",{value:""},"Todos"),
-                React.createElement("option",{value:"Acarreo"},"Acarreo"),
-                React.createElement("option",{value:"Corto"},"Corto")
-              )
-            )
-          ),
-          React.createElement("div", {className:"row2"},
-            React.createElement("div", {className:"fld", style:{marginBottom:0}},
-              React.createElement("label", null, "Ruta"),
-              React.createElement("input", {value:rutaFiltro, placeholder:"Todas", onChange:e=>setRutaFiltro(e.target.value)})
-            ),
-            React.createElement("div", {className:"fld", style:{marginBottom:0}},
-              React.createElement("label", null, "Referencia"),
-              React.createElement("input", {value:refFiltro, placeholder:"Todas", onChange:e=>setRefFiltro(e.target.value)})
-            )
-          )
-        ),
-
-        React.createElement("div", {className:"mreg-count", style:{marginTop:10}},
-          "Mostrando ", React.createElement("b",null,filtrados.length),
-          " de ", React.createElement("b",null,registros.length), " registros",
-          hayFiltro && React.createElement("button", {
-            onClick: limpiar,
-            style:{marginLeft:10,background:"none",border:"none",color:"var(--amber)",cursor:"pointer",fontSize:"12px",fontFamily:"var(--font-b)"}
-          }, "✕ Limpiar filtro")
-        )
-      ),
-
-      filtrados.length === 0
-        ? React.createElement("div", {className:"mreg-empty"}, "No hay registros para los filtros seleccionados.")
-        : React.createElement("div", {className:"mreg-table-wrap"},
-            React.createElement("table", {className:"mreg-table"},
-              React.createElement("thead",null,
-                React.createElement("tr",null,
-                  React.createElement("th",null,"#"),
-                  isAdmin && React.createElement("th",null,"Conductor"),
-                  React.createElement("th",null,"F/H Carga"),
-                  React.createElement("th",null,"Tractora / Remolque"),
-                  React.createElement("th",null,"Tipo"),
-                  React.createElement("th",null,"Ruta"),
-                  React.createElement("th",null,"Referencia")
-                )
-              ),
-              React.createElement("tbody",null,
-                filtrados.map((r,i) =>
-                  React.createElement("tr",{key:i},
-                    React.createElement("td",{style:{color:"var(--muted)",fontSize:"12px"}}, filtrados.length - i),
-                    isAdmin && React.createElement("td",{style:{fontWeight:600}}, r.conductor || "-"),
-                    React.createElement("td",null, splitFecha(r.fcarga)),
-                    React.createElement("td",null,
-                      React.createElement("div",null, r.tractora || "-"),
-                      React.createElement("div",{style:{fontSize:"11px",color:"var(--muted)",marginTop:"2px"}}, r.remolque || "-")
-                    ),
-                    React.createElement("td",null, tipoTag(r.tipo)),
-                    React.createElement("td",null, r.ruta && r.ruta !== "-" ? r.ruta : React.createElement("span",{style:{color:"var(--muted)"}},"-")),
-                    React.createElement("td",{className:"ref"}, r.ref || React.createElement("span",{style:{color:"var(--muted)",fontFamily:"var(--font-b)",fontWeight:400}},"-"))
-                  )
-                )
-              )
-            )
-          )
-    )
-  );
-}
-
-/* ══════════════════════════════════════════════════════════
    ROOT
    ══════════════════════════════════════════════════════════ */
 function App() {
-  const [screen,    setScreen]    = useState("form");
-  const [result,    setResult]    = useState(null);
-  const [sesion,    setSesion]    = useState(null); // { nombre, registros }
+  const [screen, setScreen] = useState("form");
+  const [result, setResult] = useState(null);
   const {lists, status, fromSheet} = useLists();
 
   if (screen === "success")
@@ -1252,26 +941,11 @@ function App() {
       onNew: () => { setResult(null); setScreen("form"); }
     });
 
-  if (screen === "login")
-    return React.createElement(LoginScreen, {
-      onOk:    s => { setSesion(s); setScreen("misregistros"); },
-      onVolver: () => setScreen("form")
-    });
-
-  if (screen === "misregistros" && sesion)
-    return React.createElement(MisRegistrosScreen, {
-      nombre:    sesion.nombre,
-      isAdmin:   sesion.isAdmin,
-      registros: sesion.registros,
-      onVolver:  () => { setSesion(null); setScreen("form"); }
-    });
-
   return React.createElement(FormScreen, {
     lists,
     listsStatus: status,
     fromSheet,
-    onOk:           r => { setResult(r); setScreen("success"); },
-    onMisRegistros: () => setScreen("login")
+    onOk: r => { setResult(r); setScreen("success"); }
   });
 }
 
