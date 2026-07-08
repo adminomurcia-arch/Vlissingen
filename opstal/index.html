@@ -147,7 +147,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURATION — admin only
    Replace TU_URL_AQUI with the real Apps Script URL
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzNelzcyykttaXkmktdJSPUeMl8iSCVGz6skGwbkTYeKyNGYi0AEDBGavXLdohmahO/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/TU_URL_AQUI/exec";
 
 /* ── DEMO DATA (used only if the Sheet does not respond) ── */
 const COND_DEF  = [
@@ -255,46 +255,18 @@ function Pick({label, sub, active, onClick}) {
   );
 }
 
-/* ── Bloque Conductor ── */
-function ConductorBlock({codigo, nombre, onChange}) {
-  const state = codigo==='' ? 'idle' : nombre ? 'valid' : 'error';
-  return React.createElement("div", {className:`cond-block${state==='valid'?' valid':state==='error'?' error':''}`},
-    React.createElement("div", {className:"cond-top"},
-      React.createElement("div", {className:"cond-lbl-col"}, "Code"),
-      React.createElement("input", {
-        className:"cond-input", value:codigo, maxLength:10,
-        placeholder:"C001", autoCapitalize:"characters", spellCheck:false,
-        onChange: e => onChange(e.target.value.toUpperCase())
-      }),
-      React.createElement("div", {className:"cond-state"},
-        state==='valid' && "✅",
-        state==='error' && codigo.length>0 && "❌"
-      )
-    ),
-    React.createElement("div", {className:"cond-bottom"},
-      React.createElement("div", {className:"cond-avatar"}, nombre ? "👤" : "👥"),
-      nombre
-        ? React.createElement(React.Fragment, null,
-            React.createElement("div", {className:"cond-name"}, nombre),
-            React.createElement("div", {className:"cond-code-badge"}, codigo)
-          )
-        : React.createElement("div", {className:"cond-name empty"},
-            codigo.length===0
-              ? "Enter your driver code"
-              : `Code "${codigo}" not found`
-          )
-    )
-  );
-}
-
 /* ══════════════════════════════════════════════════════════
    PANTALLA: Formulario
    ══════════════════════════════════════════════════════════ */
 function FormScreen({lists, listsStatus, fromSheet, onOk}) {
-  const {conductores, tractoras, remolques} = lists;
+  const {tractoras, remolques} = lists;
+
+  /* Fixed identity for this interface — no driver code lookup (like Opstal) */
+  const CODIGO_FIJO = "OPSTAL";
+  const NOMBRE_FIJO = "OPSTAL";
 
   const [form, setForm] = useState({
-    codigo:"", nombre:"", tractora:"", remolque:"",
+    tractora:"", remolque:"",
     tipo:"",                          // "Acarreo" | "Corto"
     cliente:"", ruta:"",
     destCorto:"",                     // id del destino CORTO seleccionado
@@ -309,10 +281,6 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
   const submitting = useRef(false); // guardia síncrona anti-doble-envío
   const s = (k,v) => setForm(f => ({...f, [k]:v}));
 
-  const onCodigo  = v => {
-    const found = conductores.find(c => c.codigo === v.trim().toUpperCase());
-    setForm(f => ({...f, codigo:v.toUpperCase(), nombre: found ? found.nombre : ""}));
-  };
   /* Type change → reset everything that depends on it */
   const onTipo    = v => setForm(f => ({...f, tipo:v, cliente:"", ruta:"", destCorto:"", origen:"", destino:"", refRaw:""}));
   /* Client change → reset route and reference */
@@ -341,7 +309,6 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     const e = {};
     const now = fmtNow();
 
-    if (!form.nombre)   e.codigo   = "Invalid driver code";
     if (!form.tractora) e.tractora = "Required";
     if (!form.remolque) e.remolque = "Required";
     if (!form.tipo)     e.tipo     = "Select the haulage type";
@@ -423,8 +390,8 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         : "-";
 
       const payload = {
-        codigo:        form.codigo,
-        nombre:        form.nombre,
+        codigo:        CODIGO_FIJO,
+        nombre:        NOMBRE_FIJO,
         tractora:      form.tractora,
         remolque:      form.remolque,
         tipo:          form.tipo,
@@ -487,13 +454,6 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
     React.createElement("div", {className:"body"},
 
-      /* ── CONDUCTOR ── */
-      React.createElement("div", {className:"sec"},
-        React.createElement("div", {className:"sec-ttl"}, "Driver"),
-        React.createElement(ConductorBlock, {codigo:form.codigo, nombre:form.nombre, onChange:onCodigo}),
-        errs.codigo && React.createElement("div",{className:"emsg",style:{marginTop:8}},"⚠ "+errs.codigo)
-      ),
-
       /* ── VEHÍCULO ── */
       React.createElement("div", {className:"sec"},
         React.createElement("div", {className:"sec-ttl"}, "Vehicle",
@@ -502,10 +462,12 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
         React.createElement("div", {className:"row2"},
           React.createElement("div", {className:"fld"},
             React.createElement("label",null,"Tractor"),
-            React.createElement("select", {value:form.tractora, onChange:e=>s("tractora",e.target.value), className:errs.tractora?"er":""},
-              React.createElement("option",{value:""},"-- Select --"),
-              tractoras.map(t => React.createElement("option",{key:t,value:t},t))
-            ),
+            React.createElement("input", {
+              value: form.tractora,
+              placeholder: "Tractor plate",
+              className: errs.tractora?"er":"",
+              onChange: e=>s("tractora",e.target.value)
+            }),
             errs.tractora && React.createElement("div",{className:"emsg"},"⚠ "+errs.tractora)
           ),
           React.createElement("div", {className:"fld"},
