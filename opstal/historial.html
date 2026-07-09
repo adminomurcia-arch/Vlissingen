@@ -75,6 +75,22 @@
   .empty { padding: 40px 20px; text-align: center; color: #888; font-size: 14px; }
   .spinner { text-align:center; padding: 40px 0; color:#888; font-size:14px; }
   .hidden { display: none; }
+
+  .filtros { padding: 14px 18px; border-bottom: 1px solid #eee; background: #faf9f6; }
+  .filt-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .filt-fld { flex: 1; min-width: 0; }
+  .filt-fld label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .filt-fld input, .filt-fld select {
+    width: 100%; padding: 8px 10px; font-size: 13px;
+    border: 1px solid #ccc; border-radius: 7px; margin-bottom: 0;
+    -webkit-appearance: none; background: #fff;
+  }
+  .clear-btn {
+    width: 100%; padding: 8px; font-size: 12px; color: #888;
+    background: none; border: 1px solid #ddd; border-radius: 7px; cursor: pointer;
+  }
+  .clear-btn:active { background: #f0f0f0; }
+  .filt-count { font-size: 11px; color: #999; text-align: center; padding: 8px 0 0; }
 </style>
 </head>
 <body>
@@ -112,6 +128,30 @@
       <button id="btnLogout">Salir</button>
     </div>
 
+    <div id="filtros" class="filtros">
+      <div class="filt-row">
+        <div class="filt-fld">
+          <label>Desde</label>
+          <input type="date" id="fDesde">
+        </div>
+        <div class="filt-fld">
+          <label>Hasta</label>
+          <input type="date" id="fHasta">
+        </div>
+      </div>
+      <div class="filt-row">
+        <div class="filt-fld">
+          <label>Remolque</label>
+          <select id="fRemolque"><option value="">Todos</option></select>
+        </div>
+        <div class="filt-fld">
+          <label>Referencia</label>
+          <input type="text" id="fReferencia" placeholder="Buscar...">
+        </div>
+      </div>
+      <button id="btnLimpiar" class="clear-btn">Limpiar filtros</button>
+    </div>
+
     <div id="histBody">
       <!-- se rellena por JS -->
     </div>
@@ -137,6 +177,14 @@
   var histNombre  = document.getElementById("histNombre");
   var histSub     = document.getElementById("histSub");
   var histBody    = document.getElementById("histBody");
+  var fDesde      = document.getElementById("fDesde");
+  var fHasta      = document.getElementById("fHasta");
+  var fRemolque   = document.getElementById("fRemolque");
+  var fReferencia = document.getElementById("fReferencia");
+  var btnLimpiar  = document.getElementById("btnLimpiar");
+
+  var todosLosRegistros = []; // histórico completo tal cual llega del backend
+  var esAdmin = false;
 
   function showError(el, msg) {
     el.textContent = msg;
@@ -153,11 +201,15 @@
 
   function renderTabla(registros) {
     if (!registros || registros.length === 0) {
-      histBody.innerHTML = '<div class="empty">No tienes portes registrados todavía.</div>';
+      var sinPortes = todosLosRegistros.length === 0;
+      histBody.innerHTML = '<div class="empty">' +
+        (sinPortes ? "No tienes portes registrados todavía." : "Ningún porte coincide con los filtros aplicados.") +
+        '</div><div class="filt-count" id="filtCount"></div>';
       return;
     }
     var filas = registros.map(function (r) {
       return "<tr>" +
+        (esAdmin ? "<td>" + esc(r.conductor) + "</td>" : "") +
         "<td>" + esc(r.fcarga) + "</td>" +
         "<td>" + esc(r.ruta) + "</td>" +
         "<td class='ref'>" + esc(r.ref) + "</td>" +
@@ -169,14 +221,89 @@
 
     histBody.innerHTML =
       '<div class="tbl-wrap"><table><thead><tr>' +
+      (esAdmin ? "<th>Conductor</th>" : "") +
       "<th>F/H carga</th><th>Ruta</th><th>Referencia</th><th>Tractora</th><th>Remolque</th><th>Tipo</th>" +
       "</tr></thead><tbody>" + filas + "</tbody></table></div>" +
-      '<div class="hint">Desliza la tabla hacia los lados para ver más columnas →</div>';
+      '<div class="hint">Desliza la tabla hacia los lados para ver más columnas →</div>' +
+      '<div class="filt-count" id="filtCount"></div>';
   }
 
   function esc(v) {
     v = (v === null || v === undefined) ? "" : String(v);
     return v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function parseFechaHora(str) {
+    if (!str) return null;
+    var s = String(str).trim();
+    /* Formato dd/MM/yyyy HH:mm */
+    var m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[ T](\d{2}):(\d{2}))?/);
+    if (m1) {
+      return new Date(Number(m1[3]), Number(m1[2]) - 1, Number(m1[1]), Number(m1[4] || 0), Number(m1[5] || 0));
+    }
+    /* Formato yyyy-MM-dd HH:mm (tal cual lo manda el formulario si Sheets no lo autoconvirtio a Date) */
+    var m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+    if (m2) {
+      return new Date(Number(m2[1]), Number(m2[2]) - 1, Number(m2[3]), Number(m2[4] || 0), Number(m2[5] || 0));
+    }
+    return null;
+  }
+
+  function poblarRemolques(registros) {
+    var vistos = {};
+    var opciones = [];
+    registros.forEach(function (r) {
+      var rem = (r.remolque || "").trim();
+      if (rem && !vistos[rem]) { vistos[rem] = true; opciones.push(rem); }
+    });
+    opciones.sort();
+    fRemolque.innerHTML = '<option value="">Todos</option>' +
+      opciones.map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + '</option>'; }).join("");
+  }
+
+  function aplicarFiltros() {
+    var desde = fDesde.value ? new Date(fDesde.value + "T00:00:00") : null;
+    var hasta = fHasta.value ? new Date(fHasta.value + "T23:59:59") : null;
+    var remolque = fRemolque.value;
+    var refBuscada = fReferencia.value.trim().toLowerCase();
+
+    var filtrados = todosLosRegistros.filter(function (r) {
+      if (desde || hasta) {
+        var fReg = parseFechaHora(r.fcarga);
+        if (!fReg) return false;
+        if (desde && fReg < desde) return false;
+        if (hasta && fReg > hasta) return false;
+      }
+      if (remolque && r.remolque !== remolque) return false;
+      if (refBuscada && (r.ref || "").toLowerCase().indexOf(refBuscada) === -1) return false;
+      return true;
+    });
+
+    /* Ordenar por F/H carga, mas reciente primero. Registros sin fecha valida van al final. */
+    filtrados.sort(function (a, b) {
+      var da = parseFechaHora(a.fcarga);
+      var db = parseFechaHora(b.fcarga);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db - da;
+    });
+
+    renderTabla(filtrados);
+
+    var contador = document.getElementById("filtCount");
+    var texto = filtrados.length === todosLosRegistros.length
+      ? filtrados.length + " porte" + (filtrados.length === 1 ? "" : "s")
+      : filtrados.length + " de " + todosLosRegistros.length + " portes";
+    if (contador) contador.textContent = texto;
+  }
+
+  function limpiarFiltros() {
+    fDesde.value = "";
+    fHasta.value = "";
+    fRemolque.value = "";
+    fReferencia.value = "";
+    aplicarFiltros();
   }
 
   function doLogin() {
@@ -209,7 +336,11 @@
 
         histNombre.textContent = data.nombre + (data.isAdmin ? " (admin)" : "");
         histSub.textContent = codigo + " · " + data.registros.length + " porte" + (data.registros.length === 1 ? "" : "s");
-        renderTabla(data.registros);
+
+        todosLosRegistros = data.registros || [];
+        esAdmin = !!data.isAdmin;
+        poblarRemolques(todosLosRegistros);
+        limpiarFiltros(); // resetea inputs y llama a aplicarFiltros() -> renderTabla()
 
         loginScreen.classList.add("hidden");
         histScreen.classList.remove("hidden");
@@ -227,12 +358,19 @@
     inCodigo.value = "";
     inPin.value = "";
     clearErrors();
+    todosLosRegistros = [];
+    esAdmin = false;
     histScreen.classList.add("hidden");
     loginScreen.classList.remove("hidden");
   }
 
   btnLogin.addEventListener("click", doLogin);
   btnLogout.addEventListener("click", doLogout);
+  fDesde.addEventListener("change", aplicarFiltros);
+  fHasta.addEventListener("change", aplicarFiltros);
+  fRemolque.addEventListener("change", aplicarFiltros);
+  fReferencia.addEventListener("input", aplicarFiltros);
+  btnLimpiar.addEventListener("click", limpiarFiltros);
   inPin.addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
   inCodigo.addEventListener("keydown", function (e) { if (e.key === "Enter") inPin.focus(); });
 
