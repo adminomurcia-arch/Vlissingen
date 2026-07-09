@@ -163,7 +163,7 @@
 (function () {
   "use strict";
 
-  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIZadR4r1LD5iXTouYFq4vz0W0Bx8oAKmut_xcHm5Wtc_TWR-34dEtl10HqH7a42sd/exec";
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0R5d-cx9WNZkes1ODWOYhQ7CGtXa1DVumoOzMKnycVoGmoETvBtWL0h-YKa4QVHnQ/exec";
 
   var loginScreen = document.getElementById("loginScreen");
   var histScreen  = document.getElementById("histScreen");
@@ -211,7 +211,7 @@
       return "<tr>" +
         (esAdmin ? "<td>" + esc(r.conductor) + "</td>" : "") +
         "<td>" + esc(r.fcarga) + "</td>" +
-        "<td>" + esc(r.ruta) + "</td>" +
+        "<td>" + esc(r.tipo === "Corto" ? r.destino : r.ruta) + "</td>" +
         "<td class='ref'>" + esc(r.ref) + "</td>" +
         "<td>" + esc(r.tractora) + "</td>" +
         "<td>" + esc(r.remolque) + "</td>" +
