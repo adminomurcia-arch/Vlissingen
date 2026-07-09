@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Mis Portes — Vlissingen</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f4f4f2;
+    color: #222;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 480px; min-height: 100vh; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.06); }
+  .head {
+    background: #f0a500;
+    padding: 22px 20px;
+    text-align: center;
+  }
+  .head .icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(0,0,0,0.12);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px; font-size: 22px;
+  }
+  .head h1 { font-size: 17px; font-weight: 600; margin: 0; color: #000; }
+  .head p  { font-size: 12px; margin: 4px 0 0; color: #4a3a00; }
+
+  .body { padding: 22px 20px; }
+
+  label { display:block; font-size:13px; color:#666; margin-bottom:6px; }
+  input {
+    width: 100%; padding: 11px 12px; font-size: 15px;
+    border: 1px solid #ccc; border-radius: 8px; margin-bottom: 16px;
+    -webkit-appearance: none;
+  }
+  input:focus { outline: none; border-color: #f0a500; }
+  input.er { border-color: #d33; }
+  input.upper { text-transform: uppercase; }
+
+  button.main {
+    width: 100%; padding: 13px; font-size: 15px; font-weight: 600;
+    background: #f0a500; border: 1px solid #b87e00; border-radius: 8px;
+    color: #000; cursor: pointer;
+  }
+  button.main:disabled { opacity: 0.6; }
+  button.main:active { transform: scale(0.98); }
+
+  .emsg { color: #d33; font-size: 13px; margin: -10px 0 14px; }
+
+  .top-bar {
+    background: #f0a500; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .top-bar .nombre { font-weight: 600; font-size: 14px; color: #000; margin:0; }
+  .top-bar .sub    { font-size: 11px; color: #4a3a00; margin: 2px 0 0; }
+  .top-bar button {
+    background: none; border: none; color: #000; font-size: 13px;
+    cursor: pointer; text-decoration: underline; padding: 4px;
+  }
+
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
+  th { text-align: left; padding: 10px 12px; font-weight: 600; color: #666; background: #faf9f6; position: sticky; top: 0; }
+  td { padding: 10px 12px; border-top: 1px solid #eee; }
+  tr:nth-child(even) td { background: #fbfbfa; }
+  .ref { color: #b87e00; font-weight: 600; }
+
+  .hint { font-size: 11px; color: #999; text-align: center; padding: 10px 0; }
+  .empty { padding: 40px 20px; text-align: center; color: #888; font-size: 14px; }
+  .spinner { text-align:center; padding: 40px 0; color:#888; font-size:14px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ═══ PANTALLA LOGIN ═══ -->
+  <div id="loginScreen">
+    <div class="head">
+      <div class="icon">🚚</div>
+      <h1>Mis Portes</h1>
+      <p>Portes Vlissingen</p>
+    </div>
+    <div class="body">
+      <label for="inCodigo">Código de conductor</label>
+      <input id="inCodigo" class="upper" placeholder="C001" maxlength="10" autocapitalize="characters" autocomplete="off">
+      <div id="errCodigo" class="emsg hidden"></div>
+
+      <label for="inPin">PIN</label>
+      <input id="inPin" type="password" placeholder="••••" maxlength="10" autocomplete="off">
+      <div id="errPin" class="emsg hidden"></div>
+
+      <button id="btnLogin" class="main">Entrar</button>
+      <div id="errLogin" class="emsg hidden" style="margin-top:12px;text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PANTALLA HISTORIAL ═══ -->
+  <div id="histScreen" class="hidden">
+    <div class="top-bar">
+      <div>
+        <p class="nombre" id="histNombre"></p>
+        <p class="sub" id="histSub"></p>
+      </div>
+      <button id="btnLogout">Salir</button>
+    </div>
+
+    <div id="histBody">
+      <!-- se rellena por JS -->
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfOQw7_rAO8Xnxo-d5ABFt0bfL9eEjv6_sKtCmGMfiTGkRcn6CiFKllLlejd5Htp5M/exec";
+
+  var loginScreen = document.getElementById("loginScreen");
+  var histScreen  = document.getElementById("histScreen");
+  var inCodigo    = document.getElementById("inCodigo");
+  var inPin       = document.getElementById("inPin");
+  var errCodigo   = document.getElementById("errCodigo");
+  var errPin      = document.getElementById("errPin");
+  var errLogin    = document.getElementById("errLogin");
+  var btnLogin    = document.getElementById("btnLogin");
+  var btnLogout   = document.getElementById("btnLogout");
+  var histNombre  = document.getElementById("histNombre");
+  var histSub     = document.getElementById("histSub");
+  var histBody    = document.getElementById("histBody");
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.classList.remove("hidden");
+  }
+  function clearErrors() {
+    [errCodigo, errPin, errLogin].forEach(function (el) {
+      el.textContent = "";
+      el.classList.add("hidden");
+    });
+    inCodigo.classList.remove("er");
+    inPin.classList.remove("er");
+  }
+
+  function renderTabla(registros) {
+    if (!registros || registros.length === 0) {
+      histBody.innerHTML = '<div class="empty">No tienes portes registrados todavía.</div>';
+      return;
+    }
+    var filas = registros.map(function (r) {
+      return "<tr>" +
+        "<td>" + esc(r.fcarga) + "</td>" +
+        "<td>" + esc(r.ruta) + "</td>" +
+        "<td class='ref'>" + esc(r.ref) + "</td>" +
+        "<td>" + esc(r.tractora) + "</td>" +
+        "<td>" + esc(r.remolque) + "</td>" +
+        "<td>" + esc(r.tipo) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    histBody.innerHTML =
+      '<div class="tbl-wrap"><table><thead><tr>' +
+      "<th>F/H carga</th><th>Ruta</th><th>Referencia</th><th>Tractora</th><th>Remolque</th><th>Tipo</th>" +
+      "</tr></thead><tbody>" + filas + "</tbody></table></div>" +
+      '<div class="hint">Desliza la tabla hacia los lados para ver más columnas →</div>';
+  }
+
+  function esc(v) {
+    v = (v === null || v === undefined) ? "" : String(v);
+    return v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function doLogin() {
+    clearErrors();
+
+    var codigo = inCodigo.value.trim().toUpperCase();
+    var pin    = inPin.value.trim();
+    var valido = true;
+
+    if (!codigo) { showError(errCodigo, "⚠ Introduce tu código"); inCodigo.classList.add("er"); valido = false; }
+    if (!pin)    { showError(errPin, "⚠ Introduce tu PIN"); inPin.classList.add("er"); valido = false; }
+    if (!valido) return;
+
+    btnLogin.disabled = true;
+    btnLogin.textContent = "Comprobando…";
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "login", codigo: codigo, pin: pin })
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        btnLogin.disabled = false;
+        btnLogin.textContent = "Entrar";
+
+        if (data.status !== "ok") {
+          showError(errLogin, "⚠ " + (data.msg || "Código o PIN incorrecto."));
+          return;
+        }
+
+        histNombre.textContent = data.nombre + (data.isAdmin ? " (admin)" : "");
+        histSub.textContent = codigo + " · " + data.registros.length + " porte" + (data.registros.length === 1 ? "" : "s");
+        renderTabla(data.registros);
+
+        loginScreen.classList.add("hidden");
+        histScreen.classList.remove("hidden");
+
+        /* Guardar sesion solo en memoria (no localStorage) — se pierde al cerrar/recargar */
+      })
+      .catch(function (err) {
+        btnLogin.disabled = false;
+        btnLogin.textContent = "Entrar";
+        showError(errLogin, "⚠ No se pudo conectar. Revisa la conexión e inténtalo de nuevo.");
+      });
+  }
+
+  function doLogout() {
+    inCodigo.value = "";
+    inPin.value = "";
+    clearErrors();
+    histScreen.classList.add("hidden");
+    loginScreen.classList.remove("hidden");
+  }
+
+  btnLogin.addEventListener("click", doLogin);
+  btnLogout.addEventListener("click", doLogout);
+  inPin.addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+  inCodigo.addEventListener("keydown", function (e) { if (e.key === "Enter") inPin.focus(); });
+
+})();
+</script>
+
+</body>
+</html>
