@@ -882,7 +882,11 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
 
       errs.submit && React.createElement("div",{className:"emsg",style:{marginBottom:14,textAlign:"center"}},"⚠ "+errs.submit),
       React.createElement("button",{className:"sub-btn", onClick:handleSubmit, disabled:busy},
-        busy ? "⏳ Enviando..." : "✓ Registrar Porte")
+        busy ? "⏳ Enviando..." : "✓ Registrar Porte"),
+      React.createElement("a",{
+        href:"historial.html",
+        style:{display:"block", textAlign:"center", marginTop:14, fontSize:13, color:"#888", textDecoration:"underline"}
+      }, "Ver mis registros")
     )
   );
 }
