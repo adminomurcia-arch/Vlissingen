@@ -156,7 +156,7 @@ const {useState, useEffect, useRef, useCallback} = React;
    CONFIGURATION — admin only
    Replace TU_URL_AQUI with the real Apps Script URL
    ══════════════════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0R5d-cx9WNZkes1ODWOYhQ7CGtXa1DVumoOzMKnycVoGmoETvBtWL0h-YKa4QVHnQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIZadR4r1LD5iXTouYFq4vz0W0Bx8oAKmut_xcHm5Wtc_TWR-34dEtl10HqH7a42sd/exec";
 
 /* ── DEMO DATA (used only if the Sheet does not respond) ── */
 const COND_DEF  = [
@@ -194,8 +194,8 @@ const DESTINOS_CORTO = [
   {id:"AH_DE",  label:"AH Delfgauw",           origen:false, destino:false},
   {id:"AH_TZ",  label:"AH Tilburg + Zwolle",   origen:false, destino:false},
   {id:"AH_TL",  label:"AH Tilburg + Limburg",  origen:false, destino:false},
-  {id:"BIDONES",label:"Bidones",               origen:true,  destino:false},
-  {id:"OTROS",  label:"Otros",                 origen:true,  destino:true},
+  {id:"BIDONES",label:"Bidones",               origen:true,  destino:false, refLibre:true},
+  {id:"OTROS",  label:"Otros",                 origen:true,  destino:true,  refLibre:true},
 ];
 
 /* Reference prefix */
@@ -418,7 +418,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
   const destCortoObj = DESTINOS_CORTO.find(d => d.id === form.destCorto) || null;
 
   const rutasDisponibles = RUTAS[form.cliente] || [];
-  const prefijo          = getPrefijo(form.tipo, form.cliente);
+  const prefijo          = destCortoObj?.refLibre ? null : getPrefijo(form.tipo, form.cliente);
   const isRutaDobleRef  = form.tipo === "Acarreo" && form.cliente === "White&Green" && form.ruta === "WHITE&GREEN → AMC";
   const getReference    = () => {
     if (isRutaDobleRef) {
