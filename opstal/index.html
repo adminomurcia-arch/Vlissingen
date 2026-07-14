@@ -188,7 +188,7 @@ const DESTINOS_CORTO = [
 /* Reference prefix */
 const getPrefijo = (tipo, cliente) => {
   if (tipo === "Corto")                               return "OCZ";
-  if (tipo === "Acarreo" && cliente === "AMC")        return "OCZ";
+  if (tipo === "Acarreo" && cliente === "AMC")        return "PLZ";
   // White&Green Haulage: no prefix, free alphanumeric field
   return null;
 };
@@ -345,7 +345,7 @@ function FormScreen({lists, listsStatus, fromSheet, onOk}) {
     if (form.tipo === "Acarreo" && form.ruta) {
       if (form.cliente === "AMC") {
         if (!form.refRaw || form.refRaw.length !== 7)
-          e.ref = "Exactly 7 digits (OCZ prefix added automatically)";
+          e.ref = "Exactly 7 digits (PLZ prefix added automatically)";
         else if (!/^\d{7}$/.test(form.refRaw))
           e.ref = "Digits only";
       } else if (form.cliente === "White&Green") {
